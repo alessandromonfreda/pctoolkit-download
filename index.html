@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Compulandia PC Toolkit — Download</title>
+<style>
+  :root {
+    --arancione: #e8621a;
+    --arancione-scuro: #c94f0f;
+    --sfondo: #0f1115;
+    --pannello: #171a20;
+    --testo: #eef0f3;
+    --testo-attenuato: #9aa1ab;
+    --bordo: #2a2e37;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sfondo);
+    color: var(--testo);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 24px;
+  }
+  main {
+    max-width: 560px;
+    width: 100%;
+    background: var(--pannello);
+    border: 1px solid var(--bordo);
+    border-radius: 16px;
+    padding: 40px 36px;
+    text-align: center;
+  }
+  img.logo {
+    height: 48px;
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-size: 26px;
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  p.subtitle {
+    color: var(--testo-attenuato);
+    margin: 0 0 32px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  a.download {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--arancione);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 14px 28px;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+  }
+  a.download:hover { background: var(--arancione-scuro); }
+  ul.features {
+    text-align: left;
+    color: var(--testo-attenuato);
+    font-size: 14px;
+    line-height: 1.9;
+    margin: 32px 0 0;
+    padding-left: 20px;
+  }
+  .nota {
+    margin-top: 28px;
+    padding: 14px 16px;
+    background: #1c1f26;
+    border: 1px solid var(--bordo);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--testo-attenuato);
+    text-align: left;
+    line-height: 1.6;
+  }
+  .nota strong { color: var(--testo); }
+  footer {
+    margin-top: 28px;
+    font-size: 12px;
+    color: #5c626d;
+  }
+</style>
+</head>
+<body>
+<main>
+  <img src="logo.png" alt="Compulandia" class="logo" />
+  <h1>Compulandia PC Toolkit</h1>
+  <p class="subtitle">App portatile per assistenza tecnica: diagnostica hardware, pulizia, backup dati e gestione driver in un'unica interfaccia. Nessuna installazione richiesta.</p>
+
+  <a class="download" href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaPCToolkit.exe">
+    ⬇ Scarica l'ultima versione
+  </a>
+
+  <ul class="features">
+    <li>Windows 10/11 a 64 bit</li>
+    <li>Eseguibile singolo, portatile — nessuna installazione</li>
+    <li>Diagnostica hardware, dischi, processi, avvio, servizi, eventi</li>
+    <li>Backup dati multi-profilo con supporto credenziali</li>
+  </ul>
+
+  <div class="nota">
+    <strong>Nota:</strong> al primo avvio Windows potrebbe mostrare l'avviso SmartScreen "Windows ha protetto il PC" (l'eseguibile non è ancora firmato digitalmente). Basta cliccare <strong>"Ulteriori informazioni"</strong> → <strong>"Esegui comunque"</strong>.
+  </div>
+
+  <footer>Compulandia</footer>
+</main>
+</body>
+</html>
