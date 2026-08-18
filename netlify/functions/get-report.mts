@@ -1,8 +1,12 @@
 import { getStore } from "@netlify/blobs";
 import type { Context } from "@netlify/functions";
 
-const NOT_FOUND_RETRY_ATTEMPTS = 3;
-const NOT_FOUND_RETRY_DELAY_MS = 1500;
+// Verificato empiricamente il 18/08/2026: la propagazione di una scrittura appena fatta su Netlify
+// Blobs può richiedere più di 4-5s in alcuni casi - 6 tentativi da 2s (fino a 12s in più) coprono
+// con margine quanto osservato, e riguardano SOLO il percorso "non trovato" (una lettura di un
+// report generato anche solo qualche minuto prima lo trova sempre al primo tentativo, zero ritardo).
+const NOT_FOUND_RETRY_ATTEMPTS = 6;
+const NOT_FOUND_RETRY_DELAY_MS = 2000;
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
