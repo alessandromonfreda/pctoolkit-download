@@ -1,6 +1,13 @@
 import { getStore } from "@netlify/blobs";
 import type { Context } from "@netlify/functions";
 
+const NOT_FOUND_RETRY_ATTEMPTS = 3;
+const NOT_FOUND_RETRY_DELAY_MS = 1500;
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Nessuna autenticazione qui (a differenza di upload-report): i dati non sono sensibili per
 // valutazione esplicita del rischio, e deve restare raggiungibile da un semplice fetch/curl.
 export default async (req: Request, context: Context) => {
@@ -10,7 +17,17 @@ export default async (req: Request, context: Context) => {
   }
 
   const store = getStore("reports");
-  const entry = await store.getWithMetadata(id);
+
+  // Verificato il 18/08/2026: una lettura fatta a ridosso di una scrittura appena avvenuta può
+  // restituire "non trovato" per qualche secondo (propagazione, non un bug del nostro codice) -
+  // pochi tentativi ravvicinati riducono di molto il rischio di un falso negativo per chi recupera
+  // il report subito dopo averlo generato, senza rallentare il caso comune (trovato al primo colpo).
+  let entry = await store.getWithMetadata(id);
+  for (let attempt = 0; entry === null && attempt < NOT_FOUND_RETRY_ATTEMPTS; attempt++) {
+    await delay(NOT_FOUND_RETRY_DELAY_MS);
+    entry = await store.getWithMetadata(id);
+  }
+
   if (entry === null) {
     return new Response(JSON.stringify({ error: "Report non trovato" }), { status: 404 });
   }
