@@ -52,33 +52,37 @@ export default async (req: Request, context: Context) => {
   // rivisto in un'altra data, o Cliente omonimo), si aggiunge un suffisso data (MMDD) - mai
   // sovrascrivere un report esistente. Se anche quello è occupato (stesso Cliente due volte nello
   // stesso giorno), si aggiunge un contatore progressivo fino a MAX_ID_ATTEMPTS tentativi totali.
+  //
+  // IMPORTANTE: si usa "onlyIfNew" su set() invece di un get() seguito da un set() separato.
+  // Verificato empiricamente (curl reale, 19/08/2026): due upload dello stesso slug a pochi secondi
+  // di distanza risultavano ENTRAMBI "non trovato" al get() precedente, quindi il secondo
+  // sovrascriveva silenziosamente il primo - stessa propagazione ritardata di Netlify Blobs già
+  // nota per get-report.mts, ma qui capace di causare esattamente la sovrascrittura silenziosa che
+  // questa funzionalità deve evitare. "onlyIfNew" è un'operazione atomica lato server (non dipende
+  // da una lettura precedente potenzialmente non aggiornata): se la chiave esiste già, il server
+  // stesso rifiuta la scrittura e restituisce modified:false, senza toccare il valore esistente.
   const now = new Date();
   const dateSuffix = `${twoDigits(now.getMonth() + 1)}${twoDigits(now.getDate())}`;
 
-  let id: string | null = null;
-  for (let i = 0; i < MAX_ID_ATTEMPTS && id === null; i++) {
+  const metadata = { expiresAt: Date.now() + EXPIRY_MS, createdAt: Date.now() };
+  let finalId: string | null = null;
+  for (let i = 0; i < MAX_ID_ATTEMPTS && finalId === null; i++) {
     const candidate =
       i === 0 ? requestedId
       : i === 1 ? `${requestedId}-${dateSuffix}`
       : `${requestedId}-${dateSuffix}-${i}`;
 
-    const existing = await store.get(candidate);
-    if (existing === null) {
-      id = candidate;
+    const result = await store.set(candidate, bodyText, { metadata, onlyIfNew: true });
+    if (result.modified) {
+      finalId = candidate;
     }
   }
 
-  if (id === null) {
+  if (finalId === null) {
     return new Response(JSON.stringify({ error: "Riprova con un nome diverso: troppi report già salvati con questo nome oggi" }), { status: 503 });
   }
 
-  // Nessun TTL nativo in Netlify Blobs: la scadenza è un timestamp nei metadata, controllato in
-  // lettura da get-report.mts (che cancella e ritorna 404 se scaduto).
-  await store.set(id, bodyText, {
-    metadata: { expiresAt: Date.now() + EXPIRY_MS, createdAt: Date.now() }
-  });
-
-  return new Response(JSON.stringify({ id }), {
+  return new Response(JSON.stringify({ id: finalId }), {
     status: 200,
     headers: { "content-type": "application/json" }
   });
