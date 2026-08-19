@@ -8,6 +8,12 @@ import type { Context } from "@netlify/functions";
 const NOT_FOUND_RETRY_ATTEMPTS = 6;
 const NOT_FOUND_RETRY_DELAY_MS = 2000;
 
+// Fino a 48 caratteri per coprire uno slug di 20 (Helpers/ReportIdSlugGenerator.cs) più il più
+// lungo suffisso di collisione possibile ("-MMDD-N"). Le cifre sono un sottoinsieme di [a-z0-9-],
+// quindi i vecchi ID numerici a 6 cifre (dal periodo prima di questo cambio) restano validi qui
+// senza bisogno di nessuna logica di compatibilità separata.
+const ID_PATTERN = /^[a-z0-9]([a-z0-9-]{0,46}[a-z0-9])?$/;
+
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -15,8 +21,9 @@ function delay(ms: number) {
 // Nessuna autenticazione qui (a differenza di upload-report): i dati non sono sensibili per
 // valutazione esplicita del rischio, e deve restare raggiungibile da un semplice fetch/curl.
 export default async (req: Request, context: Context) => {
-  const id = new URL(req.url).searchParams.get("id");
-  if (!id || !/^\d{6}$/.test(id)) {
+  const idParam = new URL(req.url).searchParams.get("id");
+  const id = idParam?.toLowerCase() ?? "";
+  if (!ID_PATTERN.test(id)) {
     return new Response(JSON.stringify({ error: "ID non valido" }), { status: 400 });
   }
 
