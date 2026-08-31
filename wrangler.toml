@@ -1,0 +1,7 @@
+name = "pctoolkit-download"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "REPORTS_DB"
+database_name = "pctoolkit-reports"
+database_id = "bb67c90f-5aea-4cae-b0bf-d2bd823fdfae"

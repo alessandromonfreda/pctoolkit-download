@@ -1,5 +1,6 @@
-import { getStore } from "@netlify/blobs";
-import type { Context } from "@netlify/functions";
+interface Env {
+  REPORTS_DB: D1Database;
+}
 
 // Filtro contro spam/scansioni automatiche, non un vero segreto (visibile a chi decompila l'exe) -
 // i report non contengono dati sensibili (niente password, niente contenuti di file personali).
@@ -20,21 +21,22 @@ function twoDigits(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
 
-export default async (req: Request, context: Context) => {
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Metodo non consentito" }), { status: 405 });
-  }
+function isUniqueConstraintError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return message.toUpperCase().includes("UNIQUE");
+}
 
-  if (req.headers.get(EXPECTED_HEADER) !== EXPECTED_VALUE) {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  if (request.headers.get(EXPECTED_HEADER) !== EXPECTED_VALUE) {
     return new Response(JSON.stringify({ error: "Richiesta non riconosciuta" }), { status: 403 });
   }
 
-  const requestedId = (req.headers.get(REQUESTED_ID_HEADER) ?? "").toLowerCase();
+  const requestedId = (request.headers.get(REQUESTED_ID_HEADER) ?? "").toLowerCase();
   if (!REQUESTED_ID_PATTERN.test(requestedId)) {
     return new Response(JSON.stringify({ error: "Identificativo richiesto mancante o non valido" }), { status: 400 });
   }
 
-  const bodyText = await req.text();
+  const bodyText = await request.text();
   if (!bodyText || bodyText.length > MAX_BODY_BYTES) {
     return new Response(JSON.stringify({ error: "Payload mancante o troppo grande" }), { status: 400 });
   }
@@ -45,26 +47,19 @@ export default async (req: Request, context: Context) => {
     return new Response(JSON.stringify({ error: "JSON non valido" }), { status: 400 });
   }
 
-  const store = getStore("reports");
-
-  // Deterministico, non casuale (a differenza del vecchio ID numerico): un nome scelto dal tecnico
-  // deve restare prevedibile. Primo tentativo: lo slug esatto. Se già occupato (stesso Cliente
-  // rivisto in un'altra data, o Cliente omonimo), si aggiunge un suffisso data (MMDD) - mai
-  // sovrascrivere un report esistente. Se anche quello è occupato (stesso Cliente due volte nello
-  // stesso giorno), si aggiunge un contatore progressivo fino a MAX_ID_ATTEMPTS tentativi totali.
+  // Deterministico, non casuale: un nome scelto dal tecnico deve restare prevedibile. Primo
+  // tentativo: lo slug esatto. Se già occupato (stesso Cliente rivisto in un'altra data, o Cliente
+  // omonimo), si aggiunge un suffisso data (MMDD). Se anche quello è occupato (stesso Cliente due
+  // volte nello stesso giorno), si aggiunge un contatore progressivo fino a MAX_ID_ATTEMPTS tentativi.
   //
-  // IMPORTANTE: si usa "onlyIfNew" su set() invece di un get() seguito da un set() separato.
-  // Verificato empiricamente (curl reale, 19/08/2026): due upload dello stesso slug a pochi secondi
-  // di distanza risultavano ENTRAMBI "non trovato" al get() precedente, quindi il secondo
-  // sovrascriveva silenziosamente il primo - stessa propagazione ritardata di Netlify Blobs già
-  // nota per get-report.mts, ma qui capace di causare esattamente la sovrascrittura silenziosa che
-  // questa funzionalità deve evitare. "onlyIfNew" è un'operazione atomica lato server (non dipende
-  // da una lettura precedente potenzialmente non aggiornata): se la chiave esiste già, il server
-  // stesso rifiuta la scrittura e restituisce modified:false, senza toccare il valore esistente.
+  // A differenza della versione Netlify Blobs (onlyIfNew), qui la chiave primaria della tabella
+  // SQLite rende l'INSERT atomico by design: se la chiave esiste già, D1 rifiuta la scrittura con
+  // un vincolo UNIQUE, senza bisogno di un get() preventivo (mai affidabile sotto concorrenza).
   const now = new Date();
   const dateSuffix = `${twoDigits(now.getMonth() + 1)}${twoDigits(now.getDate())}`;
+  const createdAt = Date.now();
+  const expiresAt = createdAt + EXPIRY_MS;
 
-  const metadata = { expiresAt: Date.now() + EXPIRY_MS, createdAt: Date.now() };
   let finalId: string | null = null;
   for (let i = 0; i < MAX_ID_ATTEMPTS && finalId === null; i++) {
     const candidate =
@@ -72,9 +67,16 @@ export default async (req: Request, context: Context) => {
       : i === 1 ? `${requestedId}-${dateSuffix}`
       : `${requestedId}-${dateSuffix}-${i}`;
 
-    const result = await store.set(candidate, bodyText, { metadata, onlyIfNew: true });
-    if (result.modified) {
+    try {
+      await env.REPORTS_DB.prepare(
+        "INSERT INTO reports (id, data, createdAt, expiresAt) VALUES (?, ?, ?, ?)"
+      ).bind(candidate, bodyText, createdAt, expiresAt).run();
       finalId = candidate;
+    } catch (err) {
+      if (!isUniqueConstraintError(err)) {
+        throw err;
+      }
+      // ID già occupato: prova il prossimo candidato.
     }
   }
 
