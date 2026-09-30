@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Compulandia PC Toolkit — Download</title>
+<title>Compulandia Report PC — Download</title>
 <style>
   :root {
     --arancione: #e8621a;
@@ -105,35 +105,31 @@
 <body>
 <main>
   <img src="logo.png" alt="Compulandia" class="logo" />
-  <h1>Compulandia PC Toolkit</h1>
-  <p class="subtitle">App portatile per assistenza tecnica: diagnostica hardware, pulizia, backup dati e gestione driver in un'unica interfaccia. Nessuna installazione richiesta.</p>
+  <h1>Compulandia Report PC</h1>
+  <p class="subtitle">Invia a Compulandia le informazioni tecniche del tuo PC, così possiamo aiutarti anche a distanza. Non modifica nulla sul PC e non legge i tuoi documenti.</p>
 
-  <a class="download" id="scarica" href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaPCToolkit.exe">
-    ⬇ Scarica l'ultima versione
+  <a class="download" id="scarica" href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaReportPC.exe">
+    ⬇ Scarica il programma
   </a>
-  <p class="versione" id="versione">Versione per Windows 10/11</p>
-  <p class="altre">Per un altro PC:
-    <a href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaPCToolkit.exe">Windows 10/11</a> ·
-    <a href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/PCToolkit-Win7.zip">Windows 7/8.1 (zip)</a>
-  </p>
+  <p class="versione" id="versione">Per Windows 10 e Windows 11</p>
 
   <ul class="features">
-    <li>Windows 10/11 a 64 bit; per Windows 7/8.1 una cartella zip: estrarla e avviare CompulandiaPCToolkit.exe (installa .NET Framework 4.8 da solo se manca)</li>
-    <li>Eseguibile singolo, portatile — nessuna installazione</li>
-    <li>Diagnostica hardware, dischi, processi, avvio, servizi, eventi</li>
-    <li>Backup dati multi-profilo con supporto credenziali</li>
+    <li>Scarica il programma e aprilo: non serve installarlo</li>
+    <li>Scrivi il tuo nome e, se vuoi, il problema che hai</li>
+    <li>Premi "Invia a Compulandia" e attendi circa un minuto</li>
+    <li>Comunica al tecnico il codice che compare alla fine</li>
   </ul>
 
   <div class="nota">
-    <strong>Nota:</strong> aprendo il file scaricato, Windows mostra un avviso di sicurezza perché l'eseguibile non è ancora firmato digitalmente (normale, non è un'installazione). Basta cliccare <strong>"Esegui"</strong> — se invece compare lo schermo blu "Windows ha protetto il PC", cliccare <strong>"Ulteriori informazioni"</strong> → <strong>"Esegui comunque"</strong>.
+    <strong>Nota:</strong> aprendo il file scaricato, Windows mostra un avviso di sicurezza perché il programma non è ancora firmato digitalmente (normale, non è un'installazione). Basta cliccare <strong>"Esegui"</strong> — se invece compare lo schermo blu "Windows ha protetto il PC", cliccare <strong>"Ulteriori informazioni"</strong> → <strong>"Esegui comunque"</strong>.
   </div>
 
   <footer>Compulandia</footer>
 </main>
 <script>
-// Sceglie da solo la versione giusta per il PC da cui si scarica (28/09/2026). Senza JavaScript il
-// pulsante resta sulla versione Windows 10/11. Solo sintassi ES5: deve girare anche su Internet
-// Explorer 11 e sui browser vecchi di Windows 7.
+// Compulandia Report PC funziona solo su Windows 10 e 11 (30/09/2026): su Windows 7/8/8.1 si toglie il
+// pulsante e lo si dice, invece di far scaricare un programma che non partirebbe. Senza JavaScript il
+// pulsante resta. Solo sintassi ES5: deve girare anche su Internet Explorer 11 e sui browser vecchi.
 //
 // Due fonti, perche' nessuna da sola basta:
 // - l'intestazione User-Agent: Firefox e Internet Explorer riportano la versione vera di Windows
@@ -141,8 +137,6 @@
 // - Chrome ed Edge dichiarano "Windows NT 10.0" su QUALUNQUE Windows (riduzione dello User-Agent per
 //   la privacy): per loro serve userAgentData.platformVersion, che su Windows 7/8/8.1 inizia con "0."
 //   (da 1 in su Windows 10, da 13 in su Windows 11).
-var PCKIT_ZIP_WIN7 = 'https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/PCToolkit-Win7.zip';
-
 function pckitWindowsVecchio(nav, fatto) {
   var ua = (nav && nav.userAgent) || '';
   var nt = /Windows NT (\d+)\.(\d+)/.exec(ua);
@@ -162,10 +156,8 @@ function pckitWindowsVecchio(nav, fatto) {
 
 pckitWindowsVecchio(window.navigator, function (vecchio) {
   if (!vecchio) { return; }
-  var pulsante = document.getElementById('scarica');
-  pulsante.href = PCKIT_ZIP_WIN7;
-  pulsante.innerHTML = "&#11015; Scarica l'ultima versione (Windows 7/8.1)";
-  document.getElementById('versione').innerHTML = 'Rilevato Windows 7/8.1: si scarica una cartella zip. Estrarla e avviare CompulandiaPCToolkit.exe.';
+  document.getElementById('scarica').style.display = 'none';
+  document.getElementById('versione').innerHTML = 'Questo PC ha Windows 7 o 8.1: il programma funziona solo su Windows 10 e 11. Contatta Compulandia per ricevere assistenza.';
 });
 </script>
 </body>
