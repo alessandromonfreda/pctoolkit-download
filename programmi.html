@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>I programmi del tuo computer — Compulandia</title>
+<!--
+  Pagina per il Cliente: per ogni programma (o gruppo di programmi) "Lo uso / Non lo uso / Non so".
+  Dati da /page-data?c=CODICE (D1, mai in questo repository pubblico) oppure incorporati in
+  window.__DATI_PAGINA__ dall'anteprima di cliente_tk.py (in anteprima l'invio e' disattivato).
+  Scelte inviate a POST /page-choices?c=CODICE come {choices: {gruppo: "uso"|"non-uso"|"non-so"|"tieni"|"togli"}}.
+-->
+<style>
+  :root {
+    --arancio: #b3551f;
+    --arancio-chiaro: #fdf1ea;
+    --arancio-bordo: #f3d3c0;
+    --testo: #1a2b3c;
+    --testo-2: #4a5b6c;
+    --testo-3: #7a8896;
+    --sfondo: #f4f6f8;
+    --pannello: #ffffff;
+    --bordo: #e2e8ec;
+    --verde: #1f9d55;
+    --verde-chiaro: #e7f6ee;
+    --rosso: #c53030;
+    --rosso-chiaro: #fdecec;
+    --grigio-chiaro: #edf2f7;
+    --wa: #1fa855;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--sfondo); color: var(--testo);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.5;
+    padding-bottom: 110px;
+  }
+  .contenitore { max-width: 720px; margin: 0 auto; padding: 0 16px 24px; }
+  header.testata { background: var(--pannello); border-bottom: 3px solid var(--arancio); padding: 14px 16px; }
+  header.testata .riga { max-width: 720px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  header.testata img { height: 36px; display: block; }
+  header.testata .contatto { font-size: 13px; color: var(--testo-2); text-align: right; }
+  header.testata .contatto a { color: var(--arancio); font-weight: 600; text-decoration: none; }
+
+  h1 { font-size: 24px; line-height: 1.25; margin: 24px 0 4px; }
+  .sottotitolo { color: var(--testo-2); margin: 0 0 16px; font-size: 15px; }
+  .scheda { background: var(--pannello); border: 1px solid var(--bordo); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .intro p { margin: 0 0 8px; }
+  .intro p:last-child { margin: 0; }
+  .avviso { background: var(--arancio-chiaro); border: 1px solid var(--arancio-bordo); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px; }
+
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-3); margin: 26px 0 8px; }
+  h2.grande { font-size: 19px; text-transform: none; letter-spacing: 0; color: var(--testo); }
+
+  .domanda h3 { margin: 0 0 4px; font-size: 17px; line-height: 1.3; }
+  .domanda .spiega { margin: 0 0 6px; color: var(--testo-2); font-size: 15px; }
+  .domanda .nomi { margin: 0 0 12px; color: var(--testo-3); font-size: 13px; }
+  .domanda.risposta { border-color: #cfd8df; }
+
+  .scelte { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .scelte button {
+    font: inherit; font-size: 15px; font-weight: 600; min-height: 48px; border-radius: 10px;
+    border: 2px solid var(--bordo); background: #fff; color: var(--testo-2); cursor: pointer; padding: 6px 4px;
+  }
+  .scelte button[aria-pressed="true"].uso { border-color: var(--verde); background: var(--verde-chiaro); color: var(--verde); }
+  .scelte button[aria-pressed="true"].non-uso { border-color: var(--rosso); background: var(--rosso-chiaro); color: var(--rosso); }
+  .scelte button[aria-pressed="true"].non-so { border-color: #a0aec0; background: var(--grigio-chiaro); color: var(--testo); }
+
+  .togliere .riga { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .togliere h3 { margin: 0 0 2px; font-size: 16px; }
+  .togliere p { margin: 0; color: var(--testo-2); font-size: 14px; }
+  .togliere .nomi { color: var(--testo-3); font-size: 13px; }
+  .interruttore { flex: 0 0 auto; font: inherit; font-size: 14px; font-weight: 600; border-radius: 10px; min-height: 44px; padding: 6px 12px;
+    border: 2px solid var(--bordo); background: #fff; color: var(--testo-2); cursor: pointer; }
+  .interruttore[aria-pressed="true"] { border-color: var(--verde); background: var(--verde-chiaro); color: var(--verde); }
+  .indesiderato { display: inline-block; font-size: 12px; font-weight: 700; color: var(--rosso); background: var(--rosso-chiaro); border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+
+  .barra {
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--pannello); border-top: 1px solid var(--bordo);
+    box-shadow: 0 -4px 16px rgba(0,0,0,.06); padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .barra .dentro { max-width: 720px; margin: 0 auto; }
+  .avanzamento { height: 6px; background: var(--grigio-chiaro); border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+  .avanzamento div { height: 100%; background: var(--arancio); width: 0; transition: width .2s; }
+  .barra .riga { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+  .barra .stato { font-size: 14px; color: var(--testo-2); }
+  .invia { font: inherit; font-weight: 700; font-size: 16px; border: 0; border-radius: 12px; min-height: 50px; padding: 0 22px;
+    background: var(--arancio); color: #fff; cursor: pointer; }
+  .invia:disabled { background: #cbd5e0; cursor: not-allowed; }
+
+  .grazie { text-align: center; padding: 28px 16px; }
+  .grazie .spunta { font-size: 46px; color: var(--verde); line-height: 1; }
+  .grazie h2 { text-transform: none; letter-spacing: 0; color: var(--testo); font-size: 21px; }
+  .link { background: none; border: 0; color: var(--arancio); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 8px; }
+  .btn-wa { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: var(--wa); color: #fff; text-decoration: none;
+    font-weight: 700; border-radius: 12px; padding: 12px 18px; min-height: 48px; }
+  .btn-wa svg { width: 22px; height: 22px; }
+  .errore { color: var(--rosso); font-size: 14px; margin-top: 6px; }
+  footer { text-align: center; font-size: 13px; color: var(--testo-3); margin-top: 28px; }
+  .messaggio { text-align: center; padding: 60px 16px; color: var(--testo-2); }
+  @media (max-width: 380px) { .scelte button { font-size: 14px; } }
+</style>
+</head>
+<body>
+<!--DATI-->
+<header class="testata">
+  <div class="riga">
+    <img src="logo.png" alt="Compulandia" />
+    <div class="contatto">Assistenza Computer<br /><a id="tel-testata" href="https://wa.me/390805352607">WhatsApp 080 535 2607</a></div>
+  </div>
+</header>
+<div class="contenitore" id="app"><div class="messaggio">Caricamento…</div></div>
+<div class="barra" id="barra" hidden>
+  <div class="dentro">
+    <div class="avanzamento"><div id="progresso"></div></div>
+    <div class="riga">
+      <span class="stato" id="stato-risposte"></span>
+      <button class="invia" id="invia" type="button">Invia le risposte</button>
+    </div>
+    <div class="errore" id="errore-invio" hidden></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var WA_ICONA = '<svg viewBox="0 0 32 32" fill="#ffffff" aria-hidden="true"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.4.7 4.6 1.9 6.5L4 29l7.7-1.9c1.8 1 3.9 1.5 6.1 1.5h.1c6.6 0 12-5.4 12-12S22.5 3 16 3zm6.5 13c-.4-.2-2.1-1-2.4-1.2-.3-.1-.6-.2-.8.2-.2.3-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8l.5-.6c.2-.2.2-.4.4-.6.1-.2 0-.5 0-.7 0-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.3 3.4 1.4 3.6c.2.2 2.6 4 6.3 5.5.9.4 1.6.6 2.1.7.9.3 1.7.2 2.3.1.7-.1 2.1-.9 2.4-1.7.3-.8.3-1.5.2-1.7-.1-.1-.3-.2-.7-.4z"/></svg>';
+  var ETICHETTE = [["uso", "Lo uso"], ["non-uso", "Non lo uso"], ["non-so", "Non so"]];
+
+  var app = document.getElementById("app");
+  var barra = document.getElementById("barra");
+  var parametri = new URLSearchParams(location.search);
+  var codice = (parametri.get("c") || "").toUpperCase();
+  var anteprima = !!window.__DATI_PAGINA__;
+  var dati = null;
+  var scelte = {};
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function messaggio(t) { app.innerHTML = '<div class="messaggio">' + esc(t) + "</div>"; barra.hidden = true; }
+
+  // Bozza nel browser del Cliente: se chiude la pagina a meta', ritrova le risposte. Mai indispensabile.
+  function chiaveBozza() { return "pckit-scelte-" + codice; }
+  function salvaBozza() { try { localStorage.setItem(chiaveBozza(), JSON.stringify(scelte)); } catch (e) { /* facoltativa */ } }
+  function leggiBozza() { try { return JSON.parse(localStorage.getItem(chiaveBozza()) || "null"); } catch (e) { return null; } }
+
+  function nomi(lista) {
+    return lista.length > 1 ? "Programmi: " + lista.map(esc).join(", ") : "Programma: " + esc(lista[0]);
+  }
+
+  function aggiornaBarra() {
+    var tot = dati.domande.length;
+    var fatte = dati.domande.filter(function (d) { return scelte[d.gruppo]; }).length;
+    document.getElementById("progresso").style.width = (tot ? Math.round(fatte * 100 / tot) : 100) + "%";
+    var mancano = tot - fatte;
+    document.getElementById("stato-risposte").textContent = mancano
+      ? (mancano === 1 ? "Manca 1 risposta" : "Mancano " + mancano + " risposte")
+      : "Tutto pronto!";
+    var invia = document.getElementById("invia");
+    invia.disabled = mancano > 0 || anteprima;
+    invia.textContent = anteprima ? "Anteprima: invio disattivato" : "Invia le risposte";
+  }
+
+  function disegna() {
+    document.title = "I programmi del tuo computer — " + dati.pc;
+    var h = "<h1>I programmi del tuo computer</h1>";
+    h += '<p class="sottotitolo">' + esc(dati.pc) + " · controllo del " + esc(dati.dataControllo) + "</p>";
+    h += '<section class="scheda intro"><p>Per sistemare il tuo computer senza togliere nulla che ti serve, aiutaci a capire quali programmi usi.</p>' +
+      "<p>Per ogni voce tocca <b>Lo uso</b>, <b>Non lo uso</b> oppure <b>Non so</b>: se hai un dubbio scegli “Non so”, ci pensiamo noi. " +
+      "Non cambia nulla finché non ne parliamo insieme.</p></section>";
+
+    if (dati.domande.length) {
+      var categoria = null;
+      dati.domande.forEach(function (d, i) {
+        if (d.categoria !== categoria) { categoria = d.categoria; h += "<h2>" + esc(categoria) + "</h2>"; }
+        h += '<section class="scheda domanda" data-i="' + i + '"><h3>' + esc(d.domanda) + "</h3>" +
+          (d.spiegazione ? '<p class="spiega">' + esc(d.spiegazione) + "</p>" : "") +
+          '<p class="nomi">' + nomi(d.programmi) + "</p>" +
+          '<div class="scelte" role="group" aria-label="' + esc(d.domanda) + '">' +
+          ETICHETTE.map(function (e) {
+            return '<button type="button" class="' + e[0] + '" data-gruppo="' + esc(d.gruppo) + '" data-valore="' + e[0] + '" aria-pressed="false">' + e[1] + "</button>";
+          }).join("") + "</div></section>";
+      });
+    }
+
+    if (dati.daTogliere.length) {
+      h += '<h2 class="grande">Questi li togliamo noi</h2>' +
+        '<div class="avviso">Sono programmi inutili, superati o indesiderati che rallentano il computer. Se però uno di questi ti serve, tocca <b>Voglio tenerlo</b>.</div>';
+      dati.daTogliere.forEach(function (t) {
+        h += '<section class="scheda togliere"><div class="riga"><div><h3>' + esc(t.programmi.join(", ")) +
+          (t.indesiderato ? '<span class="indesiderato">indesiderato</span>' : "") + "</h3>" +
+          "<p>" + esc(t.spiegazione) + "</p></div>" +
+          '<button type="button" class="interruttore" data-gruppo="' + esc(t.gruppo) + '" aria-pressed="false">Voglio tenerlo</button></div></section>';
+      });
+    }
+
+    h += "<footer>" + esc(dati.azienda.nome) + " · " + esc(dati.azienda.indirizzo) + "<br />WhatsApp e telefono " +
+      esc(dati.azienda.telefono) + " · " + esc(dati.azienda.sito) + "</footer>";
+    app.innerHTML = h;
+    barra.hidden = false;
+    applicaScelte();
+    aggiornaBarra();
+  }
+
+  function applicaScelte() {
+    Array.prototype.forEach.call(app.querySelectorAll(".scelte button"), function (b) {
+      var attivo = scelte[b.getAttribute("data-gruppo")] === b.getAttribute("data-valore");
+      b.setAttribute("aria-pressed", attivo ? "true" : "false");
+      b.closest(".domanda").classList.toggle("risposta", !!scelte[b.getAttribute("data-gruppo")]);
+    });
+    Array.prototype.forEach.call(app.querySelectorAll(".interruttore"), function (b) {
+      var tieni = scelte[b.getAttribute("data-gruppo")] === "tieni";
+      b.setAttribute("aria-pressed", tieni ? "true" : "false");
+      b.textContent = tieni ? "✓ Lo teniamo" : "Voglio tenerlo";
+    });
+  }
+
+  app.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b || !dati) { return; }
+    var g = b.getAttribute("data-gruppo");
+    if (b.classList.contains("interruttore")) {
+      scelte[g] = scelte[g] === "tieni" ? "togli" : "tieni";
+    } else if (b.hasAttribute("data-valore")) {
+      scelte[g] = b.getAttribute("data-valore");
+    } else {
+      return;
+    }
+    salvaBozza();
+    applicaScelte();
+    aggiornaBarra();
+  });
+
+  document.getElementById("invia").addEventListener("click", function () {
+    var invia = this, errore = document.getElementById("errore-invio");
+    errore.hidden = true;
+    invia.disabled = true;
+    invia.textContent = "Invio…";
+    // I gruppi "da togliere" senza scelta valgono "togli": lo diciamo esplicitamente al server.
+    var completo = {};
+    Object.keys(scelte).forEach(function (k) { completo[k] = scelte[k]; });
+    dati.daTogliere.forEach(function (t) { if (!completo[t.gruppo]) { completo[t.gruppo] = "togli"; } });
+    fetch("/page-choices?c=" + encodeURIComponent(codice), {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ choices: completo })
+    }).then(function (r) {
+      if (!r.ok) { throw new Error(String(r.status)); }
+      // Inviate: la bozza non serve piu' (riaprendo il link si vede la conferma con le scelte salvate sul server).
+      try { localStorage.removeItem(chiaveBozza()); } catch (e) { /* facoltativa */ }
+      grazie();
+    }).catch(function () {
+      errore.textContent = "Invio non riuscito: controlla la connessione e riprova. Le tue risposte restano salvate qui.";
+      errore.hidden = false;
+      aggiornaBarra();
+    });
+  });
+
+  function grazie() {
+    barra.hidden = true;
+    app.innerHTML = '<section class="scheda grazie" style="margin-top:24px"><div class="spunta">✓</div>' +
+      "<h2>Grazie, abbiamo ricevuto le tue risposte!</h2>" +
+      "<p>Ora sappiamo cosa ti serve e cosa no. Ti ricontattiamo noi per organizzare l'intervento.</p>" +
+      '<p><a class="btn-wa" href="https://wa.me/390805352607" target="_blank" rel="noopener">' + WA_ICONA + "Scrivici su WhatsApp</a></p>" +
+      '<button type="button" class="link" id="modifica">Voglio cambiare qualche risposta</button></section>';
+    document.getElementById("modifica").addEventListener("click", function () { disegna(); window.scrollTo(0, 0); });
+    window.scrollTo(0, 0);
+  }
+
+  function avvia(d, salvate) {
+    dati = d;
+    scelte = leggiBozza() || salvate || {};
+    disegna();
+  }
+
+  if (anteprima) {
+    codice = "ANTEPRIMA";
+    avvia(window.__DATI_PAGINA__, null);
+    return;
+  }
+  if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(codice)) {
+    messaggio("Il link non è completo: controlla di averlo aperto per intero dal messaggio che ti abbiamo mandato.");
+    return;
+  }
+  fetch("/page-data?c=" + encodeURIComponent(codice), { cache: "no-store" })
+    .then(function (r) {
+      if (r.status === 404) { throw new Error("scaduta"); }
+      if (!r.ok) { throw new Error("errore"); }
+      return r.json();
+    })
+    .then(function (risposta) {
+      if (risposta.kind !== "programmi") { throw new Error("errore"); }
+      avvia(risposta.data, risposta.choices);
+      if (risposta.choicesAt && !leggiBozza()) { grazie(); }
+    })
+    .catch(function (e) {
+      messaggio(e.message === "scaduta"
+        ? "Questa pagina non è più disponibile. Scrivici su WhatsApp al 080 535 2607 e te la rimandiamo."
+        : "Non riusciamo a caricare la pagina in questo momento. Riprova tra poco oppure scrivici su WhatsApp al 080 535 2607.");
+    });
+})();
+</script>
+</body>
+</html>

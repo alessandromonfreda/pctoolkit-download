@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Diagnosi del tuo computer — Compulandia</title>
+<!--
+  Pagina per il Cliente: diagnosi del PC spiegata senza tecnicismi.
+  I dati NON stanno in questo file (il repository e' pubblico): arrivano da /page-data?c=CODICE (tabella D1
+  customer_pages), oppure sono incorporati in window.__DATI_PAGINA__ dall'anteprima locale di cliente_tk.py.
+  ?stampa=1 = versione per il PDF (tutto aperto, niente pulsanti).
+-->
+<style>
+  :root {
+    --arancio: #b3551f;
+    --arancio-chiaro: #fdf1ea;
+    --arancio-bordo: #f3d3c0;
+    --testo: #1a2b3c;
+    --testo-2: #4a5b6c;
+    --testo-3: #7a8896;
+    --sfondo: #f4f6f8;
+    --pannello: #ffffff;
+    --bordo: #e2e8ec;
+    --verde: #1f9d55;
+    --verde-chiaro: #e7f6ee;
+    --giallo: #b7791f;
+    --giallo-chiaro: #fdf6e3;
+    --rosso: #c53030;
+    --rosso-chiaro: #fdecec;
+    --wa: #1fa855;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--sfondo);
+    color: var(--testo);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .contenitore { max-width: 720px; margin: 0 auto; padding: 0 16px 40px; }
+  header.testata {
+    background: var(--pannello);
+    border-bottom: 3px solid var(--arancio);
+    padding: 14px 16px;
+  }
+  header.testata .riga { max-width: 720px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  header.testata img { height: 36px; display: block; }
+  header.testata .contatto { font-size: 13px; color: var(--testo-2); text-align: right; }
+  header.testata .contatto a { color: var(--arancio); font-weight: 600; text-decoration: none; }
+
+  h1 { font-size: 24px; line-height: 1.25; margin: 24px 0 4px; }
+  .sottotitolo { color: var(--testo-2); margin: 0 0 20px; font-size: 15px; }
+
+  .scheda { background: var(--pannello); border: 1px solid var(--bordo); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+
+  /* Riepilogo con il punteggio */
+  .riepilogo { display: flex; gap: 18px; align-items: center; }
+  .anello { flex: 0 0 auto; width: 112px; height: 112px; position: relative; }
+  .anello svg { width: 112px; height: 112px; transform: rotate(-90deg); }
+  .anello .valore { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .anello .valore b { font-size: 30px; line-height: 1; }
+  .anello .valore span { font-size: 11px; color: var(--testo-3); }
+  .riepilogo .stato { display: inline-block; font-weight: 700; font-size: 13px; padding: 3px 10px; border-radius: 999px; margin-bottom: 6px; }
+  .riepilogo p { margin: 0; }
+
+  .s-critico { color: var(--rosso); background: var(--rosso-chiaro); }
+  .s-da_sistemare { color: var(--giallo); background: var(--giallo-chiaro); }
+  .s-buono { color: var(--verde); background: var(--verde-chiaro); }
+
+  /* Le cinque aree */
+  .aree { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 16px; }
+  .area { border-radius: 10px; padding: 10px; font-size: 14px; border: 1px solid transparent; }
+  .area b { display: block; font-size: 14px; }
+  .area span { font-size: 12px; }
+  .area.s-critico { border-color: #f5c6c6; }
+  .area.s-da_sistemare { border-color: #f0dca8; }
+  .area.s-buono { border-color: #bfe5cf; }
+
+  h2 { font-size: 19px; margin: 28px 0 10px; }
+  h3.area-titolo { font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-3); margin: 22px 0 8px; display: flex; align-items: center; gap: 8px; }
+  h3.area-titolo .pallino { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  .problema { border-left: 5px solid var(--bordo); }
+  .problema.g2 { border-left-color: var(--rosso); }
+  .problema.g1 { border-left-color: var(--giallo); }
+  .problema.g0 { border-left-color: #a0aec0; }
+  .problema .intesta { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .problema h4 { margin: 0 0 8px; font-size: 17px; line-height: 1.3; }
+  .badge { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge.g2 { color: var(--rosso); background: var(--rosso-chiaro); }
+  .badge.g1 { color: var(--giallo); background: var(--giallo-chiaro); }
+  .badge.g0 { color: var(--testo-2); background: #edf2f7; }
+  .problema p { margin: 0 0 10px; color: var(--testo-2); }
+  .rischio { background: var(--arancio-chiaro); border: 1px solid var(--arancio-bordo); border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+  .rischio b { color: var(--arancio); }
+
+  .nessuno { color: var(--verde); font-size: 15px; margin: 0 0 8px; }
+
+  /* Interventi */
+  .intervento h4 { margin: 0 0 6px; font-size: 18px; }
+  .intervento p { margin: 0 0 14px; color: var(--testo-2); }
+  .btn-wa {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--wa); color: #fff; text-decoration: none; font-weight: 700;
+    border-radius: 12px; padding: 14px 16px; font-size: 16px; min-height: 52px;
+  }
+  .btn-wa svg { width: 22px; height: 22px; flex: 0 0 auto; }
+  .btn-wa:active { filter: brightness(.92); }
+
+  .chiusura { background: var(--arancio-chiaro); border: 1px solid var(--arancio-bordo); }
+  .chiusura h2 { margin-top: 0; }
+  .perche ul { margin: 0; padding-left: 20px; }
+  .perche li { margin-bottom: 6px; }
+
+  footer { text-align: center; font-size: 13px; color: var(--testo-3); margin-top: 28px; }
+  footer a { color: var(--arancio); }
+
+  .messaggio { text-align: center; padding: 60px 16px; color: var(--testo-2); }
+  .solo-stampa { display: none; }
+
+  @media (max-width: 420px) {
+    .riepilogo { flex-direction: column; text-align: center; }
+    h1 { font-size: 22px; }
+  }
+
+  @media print {
+    @page { size: A4; margin: 12mm 12mm 14mm; }
+    body { background: #fff; font-size: 12.5px; }
+    .contenitore { max-width: none; padding: 0; }
+    header.testata { padding: 0 0 8px; }
+    .scheda { break-inside: avoid; page-break-inside: avoid; border-color: #d5dde3; padding: 12px 14px; margin-bottom: 10px; }
+    h2 { break-after: avoid; page-break-after: avoid; }
+    h3.area-titolo { break-after: avoid; page-break-after: avoid; }
+    .rischio { font-size: inherit; padding: 8px 10px; }
+    .btn-wa { display: none; }
+    .solo-stampa { display: block; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<!--DATI-->
+<header class="testata">
+  <div class="riga">
+    <img src="logo.png" alt="Compulandia" />
+    <div class="contatto">Assistenza Computer<br /><a id="tel-testata" href="#">WhatsApp 080 535 2607</a></div>
+  </div>
+</header>
+<div class="contenitore" id="app">
+  <div class="messaggio">Caricamento della diagnosi…</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var WA_ICONA = '<svg viewBox="0 0 32 32" fill="#ffffff" aria-hidden="true"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.4.7 4.6 1.9 6.5L4 29l7.7-1.9c1.8 1 3.9 1.5 6.1 1.5h.1c6.6 0 12-5.4 12-12S22.5 3 16 3zm6.5 13c-.4-.2-2.1-1-2.4-1.2-.3-.1-.6-.2-.8.2-.2.3-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8l.5-.6c.2-.2.2-.4.4-.6.1-.2 0-.5 0-.7 0-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.3 3.4 1.4 3.6c.2.2 2.6 4 6.3 5.5.9.4 1.6.6 2.1.7.9.3 1.7.2 2.3.1.7-.1 2.1-.9 2.4-1.7.3-.8.3-1.5.2-1.7-.1-.1-.3-.2-.7-.4z"/></svg>';
+  var COLORI = { critico: "#c53030", da_sistemare: "#b7791f", buono: "#1f9d55" };
+  var STATO_AREA = { critico: "Problemi gravi", da_sistemare: "Da sistemare", buono: "Nessun problema" };
+
+  var app = document.getElementById("app");
+  var parametri = new URLSearchParams(location.search);
+  var stampa = parametri.get("stampa") === "1";
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function messaggio(testo) {
+    app.innerHTML = '<div class="messaggio">' + esc(testo) + "</div>";
+  }
+
+  function anello(punteggio, stato) {
+    var r = 48, c = 2 * Math.PI * r, pieno = c * Math.max(0, Math.min(100, punteggio)) / 100;
+    return '<div class="anello" role="img" aria-label="Stato di salute ' + punteggio + ' su 100">' +
+      '<svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="' + r + '" fill="none" stroke="#edf2f7" stroke-width="12"/>' +
+      '<circle cx="56" cy="56" r="' + r + '" fill="none" stroke="' + COLORI[stato] + '" stroke-width="12" stroke-linecap="round" ' +
+      'stroke-dasharray="' + pieno.toFixed(1) + " " + c.toFixed(1) + '"/></svg>' +
+      '<div class="valore"><b style="color:' + COLORI[stato] + '">' + punteggio + '</b><span>su 100</span></div></div>';
+  }
+
+  function disegna(d) {
+    document.title = "Diagnosi del tuo computer — " + d.pc;
+    var tel = document.getElementById("tel-testata");
+    tel.href = d.waGenerico;
+    tel.textContent = "WhatsApp " + d.azienda.telefono;
+
+    var h = "";
+    h += "<h1>La diagnosi del tuo computer</h1>";
+    h += '<p class="sottotitolo">' + esc(d.pc) + " · controllo del " + esc(d.dataControllo) + "</p>";
+
+    h += '<section class="scheda"><div class="riepilogo">' + anello(d.punteggio, d.stato) +
+      '<div><span class="stato s-' + d.stato + '">Stato di salute: ' + esc(d.statoTesto) + "</span>" +
+      "<p>" + esc(d.sintesi) + "</p></div></div>";
+    h += '<div class="aree">';
+    d.aree.forEach(function (a) {
+      h += '<div class="area s-' + a.stato + '"><b>' + esc(a.nome) + "</b><span>" +
+        (a.problemi.length ? a.problemi.length + (a.problemi.length === 1 ? " problema" : " problemi") : STATO_AREA.buono) + "</span></div>";
+    });
+    h += "</div></section>";
+
+    var conProblemi = d.aree.filter(function (a) { return a.problemi.length; });
+    if (conProblemi.length) {
+      h += "<h2>Cosa abbiamo trovato</h2>";
+      conProblemi.forEach(function (a) {
+        h += '<h3 class="area-titolo"><span class="pallino" style="background:' + COLORI[a.stato] + '"></span>' + esc(a.nome) + "</h3>";
+        a.problemi.forEach(function (p) {
+          h += '<article class="scheda problema g' + p.gravita + '"><div class="intesta"><h4>' + esc(p.titolo) + "</h4>" +
+            '<span class="badge g' + p.gravita + '">' + esc(p.gravitaTesto) + "</span></div>" +
+            "<p>" + esc(p.cosaSuccede) + "</p>" +
+            '<div class="rischio"><b>Cosa rischi: </b>' + esc(p.conseguenze) + "</div></article>";
+        });
+      });
+      var sane = d.aree.filter(function (a) { return !a.problemi.length; });
+      if (sane.length) {
+        h += '<p class="nessuno">✓ Nessun problema per: ' + sane.map(function (a) { return esc(a.nome); }).join(", ") + ".</p>";
+      }
+    }
+
+    if (d.interventi.length) {
+      h += "<h2>Cosa possiamo fare per te</h2>";
+      d.interventi.forEach(function (i) {
+        h += '<section class="scheda intervento"><h4>' + esc(i.titolo) + "</h4><p>" + esc(i.testo) + "</p>" +
+          '<a class="btn-wa" href="' + esc(i.wa) + '" target="_blank" rel="noopener">' + WA_ICONA + "Scrivici su WhatsApp</a></section>";
+      });
+    }
+
+    h += '<section class="scheda chiusura"><h2>Siamo qui per aiutarti</h2>' +
+      "<p>" + (conProblemi.length
+        ? "Molti di questi problemi tendono a peggiorare con il tempo: prima si interviene, più è semplice rimettere tutto a posto. "
+        : "") + "Scrivici quando vuoi: ti spieghiamo tutto con calma, senza impegno.</p>" +
+      '<a class="btn-wa" href="' + esc(d.waGenerico) + '" target="_blank" rel="noopener">' + WA_ICONA + "Scrivici su WhatsApp</a>" +
+      '<p class="solo-stampa"><b>Scrivici su WhatsApp al ' + esc(d.azienda.telefono) + "</b></p></section>";
+
+    h += '<section class="scheda perche"><h2 style="margin-top:0">Perché scegliere Compulandia</h2><ul>' +
+      d.perche.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></section>";
+
+    h += "<footer>" + esc(d.azienda.nome) + " · " + esc(d.azienda.indirizzo) + "<br />" +
+      "WhatsApp e telefono " + esc(d.azienda.telefono) + " · " + esc(d.azienda.email) + " · " + esc(d.azienda.sito) + "<br />" +
+      esc(d.azienda.orari) + "</footer>";
+
+    app.innerHTML = h;
+  }
+
+  if (window.__DATI_PAGINA__) {
+    disegna(window.__DATI_PAGINA__);
+    return;
+  }
+
+  var codice = (parametri.get("c") || "").toUpperCase();
+  if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(codice)) {
+    messaggio("Il link non è completo: controlla di averlo aperto per intero dal messaggio che ti abbiamo mandato.");
+    return;
+  }
+  fetch("/page-data?c=" + encodeURIComponent(codice), { cache: "no-store" })
+    .then(function (r) {
+      if (r.status === 404) { throw new Error("scaduta"); }
+      if (!r.ok) { throw new Error("errore"); }
+      return r.json();
+    })
+    .then(function (risposta) {
+      if (risposta.kind !== "diagnosi") { throw new Error("errore"); }
+      disegna(risposta.data);
+    })
+    .catch(function (e) {
+      messaggio(e.message === "scaduta"
+        ? "Questa diagnosi non è più disponibile. Scrivici su WhatsApp al 080 535 2607 e te la rimandiamo."
+        : "Non riusciamo a caricare la diagnosi in questo momento. Riprova tra poco oppure scrivici su WhatsApp al 080 535 2607.");
+    });
+})();
+</script>
+</body>
+</html>
