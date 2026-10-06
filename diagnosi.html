@@ -110,6 +110,11 @@
   .btn-wa svg { width: 22px; height: 22px; flex: 0 0 auto; }
   .btn-wa:active { filter: brightness(.92); }
 
+  .offerta h2 { margin-top: 0; }
+  .offerta .riga { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--bordo); }
+  .offerta .riga small { display: block; color: var(--testo-2); }
+  .offerta .riga b { white-space: nowrap; }
+  .offerta .totale { font-size: 18px; border-bottom: 0; }
   .chiusura { background: var(--arancio-chiaro); border: 1px solid var(--arancio-bordo); }
   .chiusura h2 { margin-top: 0; }
   .perche ul { margin: 0; padding-left: 20px; }
@@ -228,6 +233,12 @@
         h += '<section class="scheda intervento"><h4>' + esc(i.titolo) + "</h4><p>" + esc(i.testo) + "</p>" +
           '<a class="btn-wa" href="' + esc(i.wa) + '" target="_blank" rel="noopener">' + WA_ICONA + "Scrivici su WhatsApp</a></section>";
       });
+    }
+
+    if (d.offerta) {
+      h += '<section class="scheda offerta"><h2>Il nostro intervento</h2>' + d.offerta.voci.map(function (v) {
+        return '<div class="riga"><span>' + esc(v.titolo) + (v.nota ? "<small>" + esc(v.nota) + "</small>" : "") + "</span><b>" + esc(v.importo) + "</b></div>";
+      }).join("") + '<div class="riga totale"><span><b>Totale</b> <small>' + esc(d.offerta.iva) + '</small></span><b>' + esc(d.offerta.totale) + "</b></div></section>";
     }
 
     h += '<section class="scheda chiusura"><h2>Siamo qui per aiutarti</h2>' +
