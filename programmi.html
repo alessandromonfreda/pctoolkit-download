@@ -10,6 +10,8 @@
   Dati da /page-data?c=CODICE (D1, mai in questo repository pubblico) oppure incorporati in
   window.__DATI_PAGINA__ dall'anteprima di cliente_tk.py (in anteprima l'invio e' disattivato).
   Scelte inviate a POST /page-choices?c=CODICE come {choices: {gruppo: "uso"|"non-uso"|"non-so"|"tieni"|"togli"}}.
+  Se la domanda ha "sostituzione" ({id, nome, testo}) e il Cliente risponde "Lo uso", compare una proposta
+  FACOLTATIVA: la risposta viaggia come {"<gruppo>|sostituisci": "si"|"no"}. Senza risposta = nessuna sostituzione.
 -->
 <style>
   :root {
@@ -65,6 +67,12 @@
   }
   .scelte button[aria-pressed="true"].uso { border-color: var(--verde); background: var(--verde-chiaro); color: var(--verde); }
   .scelte button[aria-pressed="true"].non-uso { border-color: var(--rosso); background: var(--rosso-chiaro); color: var(--rosso); }
+  .sostituzione { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--arancio-chiaro); border: 1px solid var(--arancio-bordo); }
+  .sostituzione p { margin: 0 0 8px; font-size: 14px; color: var(--testo); }
+  .sostituzione .due { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sostituzione button { font: inherit; font-size: 14px; font-weight: 600; min-height: 44px; border-radius: 10px; border: 2px solid var(--bordo);
+    background: #fff; color: var(--testo-2); cursor: pointer; padding: 6px 4px; }
+  .sostituzione button[aria-pressed="true"] { border-color: var(--verde); background: var(--verde-chiaro); color: var(--verde); }
   .scelte button[aria-pressed="true"].non-so { border-color: #a0aec0; background: var(--grigio-chiaro); color: var(--testo); }
 
   .togliere .riga { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
@@ -184,7 +192,13 @@
           '<div class="scelte" role="group" aria-label="' + esc(d.domanda) + '">' +
           ETICHETTE.map(function (e) {
             return '<button type="button" class="' + e[0] + '" data-gruppo="' + esc(d.gruppo) + '" data-valore="' + e[0] + '" aria-pressed="false">' + e[1] + "</button>";
-          }).join("") + "</div></section>";
+          }).join("") + "</div>" +
+          (d.sostituzione
+            ? '<div class="sostituzione" data-sost-gruppo="' + esc(d.gruppo) + '" hidden><p>' + esc(d.sostituzione.testo) + "</p>" +
+              '<div class="due"><button type="button" data-sost="si" data-gruppo="' + esc(d.gruppo) + '" aria-pressed="false">Sì, sostituiscilo</button>' +
+              '<button type="button" data-sost="no" data-gruppo="' + esc(d.gruppo) + '" aria-pressed="false">No, tengo il mio</button></div></div>'
+            : "") +
+          "</section>";
       });
     }
 
@@ -213,6 +227,13 @@
       b.setAttribute("aria-pressed", attivo ? "true" : "false");
       b.closest(".domanda").classList.toggle("risposta", !!scelte[b.getAttribute("data-gruppo")]);
     });
+    Array.prototype.forEach.call(app.querySelectorAll(".sostituzione"), function (box) {
+      var g = box.getAttribute("data-sost-gruppo");
+      box.hidden = scelte[g] !== "uso";
+      Array.prototype.forEach.call(box.querySelectorAll("button"), function (b) {
+        b.setAttribute("aria-pressed", scelte[g + "|sostituisci"] === b.getAttribute("data-sost") ? "true" : "false");
+      });
+    });
     Array.prototype.forEach.call(app.querySelectorAll(".interruttore"), function (b) {
       var tieni = scelte[b.getAttribute("data-gruppo")] === "tieni";
       b.setAttribute("aria-pressed", tieni ? "true" : "false");
@@ -226,8 +247,13 @@
     var g = b.getAttribute("data-gruppo");
     if (b.classList.contains("interruttore")) {
       scelte[g] = scelte[g] === "tieni" ? "togli" : "tieni";
+    } else if (b.hasAttribute("data-sost")) {
+      // proposta facoltativa: toccare di nuovo lo stesso pulsante la toglie
+      var chiave = g + "|sostituisci", v = b.getAttribute("data-sost");
+      if (scelte[chiave] === v) { delete scelte[chiave]; } else { scelte[chiave] = v; }
     } else if (b.hasAttribute("data-valore")) {
       scelte[g] = b.getAttribute("data-valore");
+      if (scelte[g] !== "uso") { delete scelte[g + "|sostituisci"]; }
     } else {
       return;
     }

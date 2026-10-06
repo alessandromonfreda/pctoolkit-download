@@ -11,6 +11,8 @@ const CODE_PATTERN = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
 const MAX_BODY_BYTES = 64 * 1024;
 const VALORI_DOMANDA = ["uso", "non-uso", "non-so"];
 const VALORI_TOGLIERE = ["tieni", "togli"];
+const VALORI_SOSTITUZIONE = ["si", "no"];
+const SUFFISSO_SOSTITUZIONE = "|sostituisci";
 
 interface PageRow {
   kind: string;
@@ -21,7 +23,7 @@ interface PageRow {
 }
 
 interface PageData {
-  domande?: { gruppo: string }[];
+  domande?: { gruppo: string; sostituzione?: unknown }[];
   daTogliere?: { gruppo: string }[];
 }
 
@@ -98,6 +100,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const data = JSON.parse(row.data) as PageData;
   const domande = new Set((data.domande ?? []).map((d) => d.gruppo));
   const togliere = new Set((data.daTogliere ?? []).map((d) => d.gruppo));
+  // Proposta facoltativa di sostituzione: ammessa solo per le domande che la prevedono.
+  const conSostituzione = new Set((data.domande ?? []).filter((d) => d.sostituzione).map((d) => d.gruppo));
   const pulite: Record<string, string> = {};
   for (const [gruppo, valore] of Object.entries(body.choices as Record<string, unknown>)) {
     if (typeof valore !== "string") {
@@ -106,6 +110,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     if (domande.has(gruppo) && VALORI_DOMANDA.includes(valore)) {
       pulite[gruppo] = valore;
     } else if (togliere.has(gruppo) && VALORI_TOGLIERE.includes(valore)) {
+      pulite[gruppo] = valore;
+    } else if (gruppo.endsWith(SUFFISSO_SOSTITUZIONE) &&
+               conSostituzione.has(gruppo.slice(0, -SUFFISSO_SOSTITUZIONE.length)) &&
+               VALORI_SOSTITUZIONE.includes(valore)) {
       pulite[gruppo] = valore;
     } else {
       return json({ error: "Scelta non valida" }, 400);
