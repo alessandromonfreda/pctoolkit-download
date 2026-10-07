@@ -20,6 +20,9 @@ const REPORT_ID_PATTERN = /^[a-z0-9]([a-z0-9-]{0,46}[a-z0-9])?$/;
 // 32 simboli senza quelli che si confondono (0/O, 1/I): 12 caratteri = 60 bit, non indovinabile.
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const MAX_TENTATIVI = 5;
+// Nome (ed eventuale telefono) del Cliente, solo per la notifica WhatsApp ad Alessandro (page-choices.ts):
+// tabella a parte, mai restituita dalle pagine pubbliche, cancellata alla scadenza della pagina.
+const MAX_ETICHETTA = 120;
 
 async function hasReadKey(request: Request): Promise<boolean> {
   const key = request.headers.get(READ_KEY_HEADER);
@@ -36,6 +39,9 @@ async function ensureTable(db: D1Database): Promise<void> {
   await db.prepare(
     "CREATE TABLE IF NOT EXISTS customer_pages (code TEXT PRIMARY KEY, kind TEXT NOT NULL, reportId TEXT NOT NULL, " +
     "data TEXT NOT NULL, createdAt INTEGER NOT NULL, expiresAt INTEGER NOT NULL, choices TEXT, choicesAt INTEGER)"
+  ).run();
+  await db.prepare(
+    "CREATE TABLE IF NOT EXISTS customer_labels (code TEXT PRIMARY KEY, label TEXT NOT NULL, expiresAt INTEGER NOT NULL)"
   ).run();
 }
 
@@ -68,7 +74,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: "Contenuto mancante o troppo grande" }, 413);
   }
 
-  let body: { kind?: unknown; reportId?: unknown; data?: unknown };
+  let body: { kind?: unknown; reportId?: unknown; data?: unknown; etichetta?: unknown };
   try {
     body = JSON.parse(text);
   } catch {
@@ -84,6 +90,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: "Dati della pagina non validi" }, 400);
   }
 
+  if (body.etichetta !== undefined &&
+      (typeof body.etichetta !== "string" || !body.etichetta.trim() || body.etichetta.length > MAX_ETICHETTA)) {
+    return json({ error: "Etichetta del Cliente non valida" }, 400);
+  }
+  const etichetta = typeof body.etichetta === "string" ? body.etichetta.trim() : null;
+
   await ensureTable(env.REPORTS_DB);
   const now = Date.now();
   const data = JSON.stringify(body.data);
@@ -93,6 +105,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       await env.REPORTS_DB.prepare(
         "INSERT INTO customer_pages (code, kind, reportId, data, createdAt, expiresAt) VALUES (?, ?, ?, ?, ?, ?)"
       ).bind(code, kind, reportId, data, now, now + EXPIRY_MS).run();
+      if (etichetta) {
+        await env.REPORTS_DB.prepare("DELETE FROM customer_labels WHERE expiresAt < ?").bind(now).run();
+        await env.REPORTS_DB.prepare("INSERT INTO customer_labels (code, label, expiresAt) VALUES (?, ?, ?)")
+          .bind(code, etichetta, now + EXPIRY_MS).run();
+      }
       const url = `${new URL(request.url).origin}/${kind}?c=${code}`;
       return json({ code, url }, 200);
     } catch (err) {

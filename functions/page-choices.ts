@@ -57,13 +57,26 @@ function codeFrom(request: Request): string {
   return (new URL(request.url).searchParams.get("c") ?? "").toUpperCase();
 }
 
-// Testo della notifica: il nome del Cliente (reportId) va solo ad Alessandro, mai nelle risposte pubbliche.
-export function testoNotifica(reportId: string, code: string, scelte: Record<string, string>, aggiornate: boolean, quando: number): string {
+// Nome e telefono del Cliente (customer_labels, scritta da publish-page.ts): solo per la notifica.
+// Se manca o la lettura fallisce, la notifica usa solo lo slug del report.
+async function etichetta(db: D1Database, code: string): Promise<string | null> {
+  try {
+    const r = await db.prepare("SELECT label FROM customer_labels WHERE code = ?").bind(code).first<{ label: string }>();
+    return r?.label ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Testo della notifica: il nome del Cliente va solo ad Alessandro, mai nelle risposte pubbliche.
+export function testoNotifica(nome: string | null, reportId: string, code: string, scelte: Record<string, string>,
+                              aggiornate: boolean, quando: number): string {
   const conta = (v: string) => Object.entries(scelte).filter(([g, x]) => !g.endsWith(SUFFISSO_SOSTITUZIONE) && x === v).length;
   const ora = new Date(quando).toLocaleString("it-IT", {
     timeZone: "Europe/Rome", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
   });
-  return `${aggiornate ? "Scelte AGGIORNATE" : "Questionario compilato"}: ${reportId} (${ora})
+  const chi = nome ? `${nome} · report ${reportId}` : `report ${reportId}`;
+  return `${aggiornate ? "Scelte AGGIORNATE" : "Questionario compilato"}: ${chi} (${ora})
 ` +
     `Usa ${conta("uso")}, non usa ${conta("non-uso")}, non sa ${conta("non-so")}; ` +
     `vuole tenere ${conta("tieni")} programmi da togliere.
@@ -156,7 +169,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
   await env.REPORTS_DB.prepare("UPDATE customer_pages SET choices = ?, choicesAt = ? WHERE code = ?")
     .bind(JSON.stringify(pulite), adesso, code).run();
   // In background a salvataggio fatto: il Cliente non aspetta CallMeBot e non vede mai i suoi errori.
-  const invio = notifica(env, testoNotifica(row.reportId, code, pulite, row.choices !== null, adesso));
+  const invio = (async () => notifica(env, testoNotifica(await etichetta(env.REPORTS_DB, code), row.reportId, code, pulite,
+                                                          row.choices !== null, adesso)))();
   if (waitUntil) {
     waitUntil(invio);
   } else {
