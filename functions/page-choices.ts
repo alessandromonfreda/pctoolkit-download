@@ -1,5 +1,9 @@
 interface Env {
   REPORTS_DB: D1Database;
+  // Notifica WhatsApp ad Alessandro tramite CallMeBot (segreti del progetto su Cloudflare, mai nel repository).
+  // Se mancano, nessuna notifica: le scelte si salvano comunque.
+  CALLMEBOT_PHONE?: string;
+  CALLMEBOT_APIKEY?: string;
 }
 
 // Scelte del Cliente sulla pagina "programmi" ("Lo uso / Non lo uso / Non so", e "Voglio tenerlo" per i
@@ -16,6 +20,7 @@ const SUFFISSO_SOSTITUZIONE = "|sostituisci";
 
 interface PageRow {
   kind: string;
+  reportId: string;
   data: string;
   expiresAt: number;
   choices: string | null;
@@ -37,7 +42,7 @@ function json(body: unknown, status: number): Response {
 async function loadPage(db: D1Database, code: string): Promise<PageRow | null> {
   try {
     const row = await db.prepare(
-      "SELECT kind, data, expiresAt, choices, choicesAt FROM customer_pages WHERE code = ?"
+      "SELECT kind, reportId, data, expiresAt, choices, choicesAt FROM customer_pages WHERE code = ?"
     ).bind(code).first<PageRow>();
     if (row === null || Date.now() > row.expiresAt) {
       return null;
@@ -50,6 +55,33 @@ async function loadPage(db: D1Database, code: string): Promise<PageRow | null> {
 
 function codeFrom(request: Request): string {
   return (new URL(request.url).searchParams.get("c") ?? "").toUpperCase();
+}
+
+// Testo della notifica: il nome del Cliente (reportId) va solo ad Alessandro, mai nelle risposte pubbliche.
+export function testoNotifica(reportId: string, code: string, scelte: Record<string, string>, aggiornate: boolean, quando: number): string {
+  const conta = (v: string) => Object.entries(scelte).filter(([g, x]) => !g.endsWith(SUFFISSO_SOSTITUZIONE) && x === v).length;
+  const ora = new Date(quando).toLocaleString("it-IT", {
+    timeZone: "Europe/Rome", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+  });
+  return `${aggiornate ? "Scelte AGGIORNATE" : "Questionario compilato"}: ${reportId} (${ora})
+` +
+    `Usa ${conta("uso")}, non usa ${conta("non-uso")}, non sa ${conta("non-so")}; ` +
+    `vuole tenere ${conta("tieni")} programmi da togliere.
+Codice TK: ${code}`;
+}
+
+async function notifica(env: Env, testo: string): Promise<void> {
+  if (!env.CALLMEBOT_PHONE || !env.CALLMEBOT_APIKEY) {
+    return;
+  }
+  const url = "https://api.callmebot.com/whatsapp.php?phone=" + encodeURIComponent(env.CALLMEBOT_PHONE) +
+    "&text=" + encodeURIComponent(testo) + "&apikey=" + encodeURIComponent(env.CALLMEBOT_APIKEY);
+  try {
+    await fetch(url, { signal: AbortSignal.timeout(10000) });
+  } catch {
+    // Servizio esterno non ufficiale: se non risponde si perde solo la notifica, mai le scelte del Cliente.
+    // Rete di sicurezza: "cliente_tk.py elenco" mostra le scelte arrivate.
+  }
 }
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
@@ -69,7 +101,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   }, 200);
 };
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
   const code = codeFrom(request);
   if (!CODE_PATTERN.test(code)) {
     return json({ error: "Codice non valido" }, 400);
@@ -120,7 +152,15 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
   }
 
+  const adesso = Date.now();
   await env.REPORTS_DB.prepare("UPDATE customer_pages SET choices = ?, choicesAt = ? WHERE code = ?")
-    .bind(JSON.stringify(pulite), Date.now(), code).run();
+    .bind(JSON.stringify(pulite), adesso, code).run();
+  // In background a salvataggio fatto: il Cliente non aspetta CallMeBot e non vede mai i suoi errori.
+  const invio = notifica(env, testoNotifica(row.reportId, code, pulite, row.choices !== null, adesso));
+  if (waitUntil) {
+    waitUntil(invio);
+  } else {
+    await invio;
+  }
   return json({ ok: true }, 200);
 };
