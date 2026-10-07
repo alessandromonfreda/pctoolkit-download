@@ -79,6 +79,13 @@
   .area.s-da_sistemare { border-color: #f0dca8; }
   .area.s-buono { border-color: #bfe5cf; }
 
+  /* Il tuo computer: riepilogo dei componenti */
+  .componenti h2 { margin-top: 0; }
+  .componenti .riga { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--bordo); }
+  .componenti .riga:last-child { border-bottom: 0; padding-bottom: 0; }
+  .componenti .riga > span { color: var(--testo-3); font-size: 14px; }
+  .componenti .riga small { display: block; color: var(--testo-2); font-size: 14px; }
+
   h2 { font-size: 19px; margin: 28px 0 10px; }
   h3.area-titolo { font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--testo-3); margin: 22px 0 8px; display: flex; align-items: center; gap: 8px; }
   h3.area-titolo .pallino { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -208,6 +215,14 @@
         (a.problemi.length ? a.problemi.length + (a.problemi.length === 1 ? " problema" : " problemi") : STATO_AREA.buono) + "</span></div>";
     });
     h += "</div></section>";
+
+    // Pagine pubblicate prima del 07/10/2026 non hanno "componenti": la sezione semplicemente non compare.
+    if (d.componenti && d.componenti.length) {
+      h += '<section class="scheda componenti"><h2>Il tuo computer</h2>' + d.componenti.map(function (c) {
+        return '<div class="riga"><span>' + esc(c.nome) + "</span><div><b>" + esc(c.valore) + "</b>" +
+          (c.nota ? "<small>" + esc(c.nota) + "</small>" : "") + "</div></div>";
+      }).join("") + "</section>";
+    }
 
     var conProblemi = d.aree.filter(function (a) { return a.problemi.length; });
     if (conProblemi.length) {
