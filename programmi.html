@@ -108,6 +108,8 @@
   footer { text-align: center; font-size: 13px; color: var(--testo-3); margin-top: 28px; }
   .messaggio { text-align: center; padding: 60px 16px; color: var(--testo-2); }
   @media (max-width: 380px) { .scelte button { font-size: 14px; } }
+  /* Testi lunghi giustificati (Alessandro, 09/10/2026): la sillabazione evita i buchi tra le parole sul telefono */
+  .scheda p:not([class]), .domanda .spiega { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 </style>
 </head>
 <body>
