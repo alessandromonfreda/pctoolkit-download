@@ -122,6 +122,8 @@
   .offerta .riga small { display: block; color: var(--testo-2); }
   .offerta .riga b { white-space: nowrap; }
   .offerta .totale { font-size: 18px; border-bottom: 0; }
+  .offerta h4 { margin: 14px 0 2px; }
+  .offerta .nota-iva { margin: 10px 0 0; color: var(--testo-2); }
   .chiusura { background: var(--arancio-chiaro); border: 1px solid var(--arancio-bordo); }
   .chiusura h2 { margin-top: 0; }
   .perche ul { margin: 0; padding-left: 20px; }
@@ -251,9 +253,21 @@
     }
 
     if (d.offerta) {
-      h += '<section class="scheda offerta"><h2>Il nostro intervento</h2>' + d.offerta.voci.map(function (v) {
+      var rigaPrezzo = function (v) {
         return '<div class="riga"><span>' + esc(v.titolo) + (v.nota ? "<small>" + esc(v.nota) + "</small>" : "") + "</span><b>" + esc(v.importo) + "</b></div>";
-      }).join("") + '<div class="riga totale"><span><b>Totale</b> <small>' + esc(d.offerta.iva) + '</small></span><b>' + esc(d.offerta.totale) + "</b></div></section>";
+      };
+      h += '<section class="scheda offerta"><h2>Il nostro intervento</h2>';
+      // Con una parte gia' fatta (caso RMC 09/10/2026) le due parti restano separate e senza totale.
+      if (d.offerta.fatti && d.offerta.fatti.length) {
+        h += "<h4>Intervento già fatto</h4>" + d.offerta.fatti.map(rigaPrezzo).join("");
+        if (d.offerta.voci.length) h += "<h4>Intervento proposto</h4>" + d.offerta.voci.map(rigaPrezzo).join("");
+      } else {
+        h += d.offerta.voci.map(rigaPrezzo).join("");
+      }
+      h += d.offerta.totale
+        ? '<div class="riga totale"><span><b>Totale</b> <small>' + esc(d.offerta.iva) + '</small></span><b>' + esc(d.offerta.totale) + "</b></div>"
+        : '<p class="nota-iva"><small>Prezzi ' + esc(d.offerta.iva) + ".</small></p>";
+      h += "</section>";
     }
 
     h += '<section class="scheda chiusura"><h2>Siamo qui per aiutarti</h2>' +
