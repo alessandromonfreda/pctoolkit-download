@@ -134,6 +134,8 @@
 
   .messaggio { text-align: center; padding: 60px 16px; color: var(--testo-2); }
   .solo-stampa { display: none; }
+  /* Testi lunghi giustificati (Alessandro, 09/10/2026): la sillabazione evita i buchi tra le parole sul telefono */
+  .scheda p:not([class]), .problema .rischio { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
 
   @media (max-width: 420px) {
     .riepilogo { flex-direction: column; text-align: center; }
