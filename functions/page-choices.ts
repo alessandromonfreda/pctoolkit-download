@@ -108,16 +108,27 @@ export interface EsitoNotifica {
 // del 10/10/2026 l'esito si scartava, e il primo questionario vero (Cilla-AIO) e' rimasto senza WhatsApp senza
 // lasciare traccia. Ora si salva il testo della risposta (senza codice di accesso ne' numero) e lo script del negozio
 // lo mostra con "cliente_tk.py scelte". "ok" solo se CallMeBot dice di averlo messo in coda ("Message queued").
-export function esitoCallMeBot(status: number, corpo: string, segreti: string[]): EsitoNotifica {
+// CallMeBot ripete prima il messaggio ("Message to: ... Text to send: ...") e scrive l'esito solo in fondo: la prova
+// dal vivo del 10/10/2026 (HTTP 208) teneva i primi 200 caratteri e l'esito restava tagliato fuori. Si toglie la
+// ripetizione fino alla fine del nostro testo (che termina sempre con il codice della pagina) e, se resta troppo
+// lungo, si tiene la coda.
+export function esitoCallMeBot(status: number, corpo: string, segreti: string[], fineMessaggio = ""): EsitoNotifica {
   let testo = corpo.replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
   for (const s of segreti.filter((x) => x.length >= 4)) {
     testo = testo.split(s).join("***").split(encodeURIComponent(s)).join("***");
   }
-  return { ok: status >= 200 && status < 300 && /queued/i.test(testo), esito: `HTTP ${status}: ${testo}`.slice(0, MAX_ESITO) };
+  const fine = fineMessaggio ? testo.lastIndexOf(fineMessaggio) : -1;
+  if (fine >= 0) {
+    testo = "[messaggio ripetuto] " + testo.slice(fine + fineMessaggio.length).trim();
+  }
+  const ok = status >= 200 && status < 300 && /queued/i.test(testo);
+  const intero = `HTTP ${status}: ${testo}`;
+  const taglio = `HTTP ${status}: …`;
+  return { ok, esito: intero.length <= MAX_ESITO ? intero : taglio + testo.slice(-(MAX_ESITO - taglio.length)) };
 }
 
-async function notifica(env: Env, testo: string): Promise<EsitoNotifica> {
+async function notifica(env: Env, testo: string, code: string): Promise<EsitoNotifica> {
   if (!env.CALLMEBOT_PHONE || !env.CALLMEBOT_APIKEY) {
     return { ok: false, esito: "non inviata: segreti CALLMEBOT_PHONE/CALLMEBOT_APIKEY mancanti sul progetto Cloudflare" };
   }
@@ -125,7 +136,7 @@ async function notifica(env: Env, testo: string): Promise<EsitoNotifica> {
     "&text=" + encodeURIComponent(testo) + "&apikey=" + encodeURIComponent(env.CALLMEBOT_APIKEY);
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    return esitoCallMeBot(res.status, await res.text(), [env.CALLMEBOT_APIKEY, env.CALLMEBOT_PHONE]);
+    return esitoCallMeBot(res.status, await res.text(), [env.CALLMEBOT_APIKEY, env.CALLMEBOT_PHONE], code);
   } catch (err) {
     // Servizio esterno non ufficiale: se non risponde si perde solo la notifica, mai le scelte del Cliente.
     const msg = err instanceof Error ? err.message : String(err);
@@ -234,7 +245,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
   // In background a salvataggio fatto: il Cliente non aspetta CallMeBot e non vede mai i suoi errori.
   const invio = (async () => {
     const esito = await notifica(env, testoNotifica(await etichetta(env.REPORTS_DB, code), row.reportId, code, pulite,
-                                                    row.choices !== null, adesso));
+                                                    row.choices !== null, adesso), code);
     await salvaEsito(env.REPORTS_DB, code, adesso, esito);
   })();
   if (waitUntil) {
