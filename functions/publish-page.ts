@@ -8,7 +8,7 @@ interface Env {
 // Il Cliente le apre con un codice casuale (mai il suo nome, che e' lo slug del report): vedi page-data.ts
 // e page-choices.ts. Questo repository e' pubblico: i dati stanno solo in D1.
 //
-// Stessa impronta in get-report.ts, list-reports.ts e qui: il test test_impronte_allineate.py della skill
+// Stessa impronta in get-report.ts, list-reports.ts, page-choices.ts e qui: il test test_impronte_allineate.py della skill
 // diagnosi-cliente-tk fallisce se divergono (per cambiarla vedi tools/ChiaveReport/chiave_report.py).
 const READ_KEY_HEADER = "x-pctoolkit-read-key";
 const READ_KEY_SHA256 = "c3d05a46e2e54253d057d1f15bd36459a03b96fde2c70693b1839572c8157c36";

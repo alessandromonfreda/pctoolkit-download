@@ -18,6 +18,22 @@ const VALORI_TOGLIERE = ["tieni", "togli"];
 const VALORI_SOSTITUZIONE = ["si", "no"];
 const SUFFISSO_SOSTITUZIONE = "|sostituisci";
 
+// L'esito della notifica (page_notifications) lo legge solo lo script del negozio, con la chiave di lettura.
+// Stessa impronta di get-report.ts, list-reports.ts e publish-page.ts (test_impronte_allineate in test_sito.py).
+const READ_KEY_HEADER = "x-pctoolkit-read-key";
+const READ_KEY_SHA256 = "c3d05a46e2e54253d057d1f15bd36459a03b96fde2c70693b1839572c8157c36";
+const MAX_ESITO = 200;
+
+async function hasReadKey(request: Request): Promise<boolean> {
+  const key = request.headers.get(READ_KEY_HEADER);
+  if (!key) {
+    return false;
+  }
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+  const hex = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hex === READ_KEY_SHA256;
+}
+
 interface PageRow {
   kind: string;
   reportId: string;
@@ -83,17 +99,60 @@ export function testoNotifica(nome: string | null, reportId: string, code: strin
 Codice TK: ${code}`;
 }
 
-async function notifica(env: Env, testo: string): Promise<void> {
+export interface EsitoNotifica {
+  ok: boolean;
+  esito: string;
+}
+
+// CallMeBot risponde 200 anche quando non consegna (codice non valido, limite giornaliero, numero sospeso): prima
+// del 10/10/2026 l'esito si scartava, e il primo questionario vero (Cilla-AIO) e' rimasto senza WhatsApp senza
+// lasciare traccia. Ora si salva il testo della risposta (senza codice di accesso ne' numero) e lo script del negozio
+// lo mostra con "cliente_tk.py scelte". "ok" solo se CallMeBot dice di averlo messo in coda ("Message queued").
+export function esitoCallMeBot(status: number, corpo: string, segreti: string[]): EsitoNotifica {
+  let testo = corpo.replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  for (const s of segreti.filter((x) => x.length >= 4)) {
+    testo = testo.split(s).join("***").split(encodeURIComponent(s)).join("***");
+  }
+  return { ok: status >= 200 && status < 300 && /queued/i.test(testo), esito: `HTTP ${status}: ${testo}`.slice(0, MAX_ESITO) };
+}
+
+async function notifica(env: Env, testo: string): Promise<EsitoNotifica> {
   if (!env.CALLMEBOT_PHONE || !env.CALLMEBOT_APIKEY) {
-    return;
+    return { ok: false, esito: "non inviata: segreti CALLMEBOT_PHONE/CALLMEBOT_APIKEY mancanti sul progetto Cloudflare" };
   }
   const url = "https://api.callmebot.com/whatsapp.php?phone=" + encodeURIComponent(env.CALLMEBOT_PHONE) +
     "&text=" + encodeURIComponent(testo) + "&apikey=" + encodeURIComponent(env.CALLMEBOT_APIKEY);
   try {
-    await fetch(url, { signal: AbortSignal.timeout(10000) });
-  } catch {
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    return esitoCallMeBot(res.status, await res.text(), [env.CALLMEBOT_APIKEY, env.CALLMEBOT_PHONE]);
+  } catch (err) {
     // Servizio esterno non ufficiale: se non risponde si perde solo la notifica, mai le scelte del Cliente.
-    // Rete di sicurezza: "cliente_tk.py elenco" mostra le scelte arrivate.
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, esito: `errore di rete: ${msg}`.slice(0, MAX_ESITO) };
+  }
+}
+
+// Mai bloccante: se il salvataggio dell'esito fallisce, le scelte del Cliente restano comunque salvate.
+async function salvaEsito(db: D1Database, code: string, quando: number, e: EsitoNotifica): Promise<void> {
+  try {
+    await db.prepare(
+      "CREATE TABLE IF NOT EXISTS page_notifications (code TEXT PRIMARY KEY, at INTEGER NOT NULL, ok INTEGER NOT NULL, esito TEXT NOT NULL)"
+    ).run();
+    await db.prepare("INSERT OR REPLACE INTO page_notifications (code, at, ok, esito) VALUES (?, ?, ?, ?)")
+      .bind(code, quando, e.ok ? 1 : 0, e.esito).run();
+  } catch {
+    // niente
+  }
+}
+
+async function leggiEsito(db: D1Database, code: string): Promise<{ at: string; ok: boolean; esito: string } | null> {
+  try {
+    const r = await db.prepare("SELECT at, ok, esito FROM page_notifications WHERE code = ?").bind(code)
+      .first<{ at: number; ok: number; esito: string }>();
+    return r ? { at: new Date(r.at).toISOString(), ok: r.ok === 1, esito: r.esito } : null;
+  } catch {
+    return null; // tabella non ancora creata: nessuna notifica tentata dopo il 10/10/2026
   }
 }
 
@@ -106,12 +165,16 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   if (row === null) {
     return json({ error: "Pagina non trovata o scaduta" }, 404);
   }
-  return json({
+  const risposta: Record<string, unknown> = {
     kind: row.kind,
     data: JSON.parse(row.data),
     choices: row.choices ? JSON.parse(row.choices) : null,
     choicesAt: row.choicesAt ? new Date(row.choicesAt).toISOString() : null
-  }, 200);
+  };
+  if (await hasReadKey(request)) {
+    risposta.notifica = await leggiEsito(env.REPORTS_DB, code);
+  }
+  return json(risposta, 200);
 };
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
@@ -169,8 +232,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUnti
   await env.REPORTS_DB.prepare("UPDATE customer_pages SET choices = ?, choicesAt = ? WHERE code = ?")
     .bind(JSON.stringify(pulite), adesso, code).run();
   // In background a salvataggio fatto: il Cliente non aspetta CallMeBot e non vede mai i suoi errori.
-  const invio = (async () => notifica(env, testoNotifica(await etichetta(env.REPORTS_DB, code), row.reportId, code, pulite,
-                                                          row.choices !== null, adesso)))();
+  const invio = (async () => {
+    const esito = await notifica(env, testoNotifica(await etichetta(env.REPORTS_DB, code), row.reportId, code, pulite,
+                                                    row.choices !== null, adesso));
+    await salvaEsito(env.REPORTS_DB, code, adesso, esito);
+  })();
   if (waitUntil) {
     waitUntil(invio);
   } else {
