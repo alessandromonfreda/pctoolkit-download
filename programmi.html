@@ -96,6 +96,12 @@
   .invia { font: inherit; font-weight: 700; font-size: 16px; border: 0; border-radius: 12px; min-height: 50px; padding: 0 22px;
     background: var(--arancio); color: #fff; cursor: pointer; }
   .invia:disabled { background: #cbd5e0; cursor: not-allowed; }
+  /* Mancano risposte: il pulsante resta toccabile e porta alla prima domanda saltata (12/10/2026, caso Trentadue:
+     su 40 domande il Cliente non trovava quella mancante e il pulsante grigio non diceva perché) */
+  .invia.incompleto { background: var(--testo-2); }
+  .domanda.manca:not(.risposta) { border-color: var(--rosso); box-shadow: 0 0 0 3px var(--rosso-chiaro); }
+  .domanda.manca:not(.risposta)::before { content: "Manca la risposta a questa domanda"; display: block; color: var(--rosso);
+    font-weight: 700; font-size: 14px; margin-bottom: 6px; }
 
   .grazie { text-align: center; padding: 28px 16px; }
   .grazie .spunta { font-size: 46px; color: var(--verde); line-height: 1; }
@@ -114,6 +120,42 @@
 </head>
 <body>
 <!--DATI-->
+<script>
+// Anteprima locale (dati incorporati da cliente_tk.py): impossibile scambiarla per la pagina del Cliente (Alessandro,
+// 12/10/2026, caso Trentadue: un'anteprima riaperta dalla cronologia di Edge sembrava la pagina vera con l'invio rotto).
+// Fascia rossa fissa, filigrana, bordo rosso e "ANTEPRIMA" in testa al titolo della scheda (si vede anche in cronologia).
+// Sulla pagina pubblicata __DATI_PAGINA__ non esiste e qui non succede nulla.
+(function () {
+  if (!window.__DATI_PAGINA__) { return; }
+  var stile = document.createElement("style");
+  stile.textContent =
+    "html{outline:8px solid #c53030;outline-offset:-8px}" +
+    "body{padding-top:76px}" +
+    ".anteprima-fascia{position:fixed;top:0;left:0;right:0;z-index:9999;color:#fff;text-align:center;padding:10px 14px;" +
+    "background:repeating-linear-gradient(45deg,#c53030 0 22px,#9b2c2c 22px 44px);box-shadow:0 2px 10px rgba(0,0,0,.35);" +
+    "font:700 17px/1.3 -apple-system,'Segoe UI',Roboto,Arial,sans-serif}" +
+    ".anteprima-filigrana{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;pointer-events:none;display:flex;" +
+    "align-items:center;justify-content:center;color:rgba(197,48,48,.13);transform:rotate(-30deg);" +
+    "font:900 min(18vw,170px)/1 Arial,sans-serif;letter-spacing:.05em}";
+  document.head.appendChild(stile);
+  document.addEventListener("DOMContentLoaded", function () {
+    var filigrana = document.createElement("div");
+    filigrana.className = "anteprima-filigrana";
+    filigrana.textContent = "ANTEPRIMA";
+    var fascia = document.createElement("div");
+    fascia.className = "anteprima-fascia";
+    fascia.textContent = "ANTEPRIMA — solo per Compulandia. Il Cliente NON vede questa pagina: la sua è il link pckit.pages.dev";
+    document.body.appendChild(filigrana);
+    document.body.appendChild(fascia);
+  });
+  // Le pagine riscrivono il titolo quando disegnano i dati: si rimette "ANTEPRIMA" davanti a ogni cambio.
+  function titolo() {
+    if (document.title.indexOf("ANTEPRIMA") !== 0) { document.title = "ANTEPRIMA — " + document.title; }
+  }
+  titolo();
+  new MutationObserver(titolo).observe(document.querySelector("title"), { childList: true, characterData: true, subtree: true });
+})();
+</script>
 <header class="testata">
   <div class="riga">
     <img src="logo.png" alt="Compulandia" />
@@ -172,8 +214,21 @@
       ? (mancano === 1 ? "Manca 1 risposta" : "Mancano " + mancano + " risposte")
       : "Tutto pronto!";
     var invia = document.getElementById("invia");
-    invia.disabled = mancano > 0 || anteprima;
-    invia.textContent = anteprima ? "Anteprima: invio disattivato" : "Invia le risposte";
+    invia.disabled = anteprima;
+    invia.classList.toggle("incompleto", mancano > 0);
+    invia.textContent = anteprima ? "Anteprima: invio disattivato"
+      : mancano > 1 ? "Vai alle risposte mancanti"
+      : mancano === 1 ? "Vai alla risposta mancante"
+      : "Invia le risposte";
+  }
+
+  /** Prima domanda senza risposta: la porta al centro dello schermo e la evidenzia. */
+  function mostraMancante() {
+    var prima = app.querySelector(".domanda:not(.risposta)");
+    if (!prima) { return false; }
+    prima.classList.add("manca");
+    prima.scrollIntoView({ behavior: "smooth", block: "center" });
+    return true;
   }
 
   function disegna() {
@@ -266,6 +321,7 @@
 
   document.getElementById("invia").addEventListener("click", function () {
     var invia = this, errore = document.getElementById("errore-invio");
+    if (anteprima || mostraMancante()) { return; }
     errore.hidden = true;
     invia.disabled = true;
     invia.textContent = "Invio…";
