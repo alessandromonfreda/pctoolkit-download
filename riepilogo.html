@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Il tuo computer dopo il nostro intervento — Compulandia</title>
+<!--
+  Pagina per il Cliente (12/10/2026, caso Dimuccio): riepilogo dell'intervento, cosa abbiamo fatto e cosa è cambiato.
+  Prima era solo un PDF da allegare; Alessandro manda sempre le pagine web su WhatsApp.
+  I dati NON stanno in questo file (il repository e' pubblico): arrivano da /page-data?c=CODICE (tabella D1
+  customer_pages), oppure sono incorporati in window.__DATI_PAGINA__ dall'anteprima locale di cliente_tk.py.
+-->
+<style>
+  :root {
+    --arancio: #b3551f;
+    --arancio-chiaro: #fdf1ea;
+    --arancio-bordo: #f3d3c0;
+    --testo: #1a2b3c;
+    --testo-2: #4a5b6c;
+    --testo-3: #7a8896;
+    --sfondo: #f4f6f8;
+    --pannello: #ffffff;
+    --bordo: #e2e8ec;
+    --verde: #1f9d55;
+    --verde-chiaro: #e7f6ee;
+    --rosso: #c53030;
+    --rosso-chiaro: #fdecec;
+    --rosso-bordo: #f5c2c2;
+    --wa: #1fa855;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--sfondo);
+    color: var(--testo);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .contenitore { max-width: 720px; margin: 0 auto; padding: 0 16px 40px; }
+  header.testata { background: var(--pannello); border-bottom: 3px solid var(--arancio); padding: 14px 16px; }
+  header.testata .riga { max-width: 720px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  header.testata img { height: 36px; display: block; }
+  header.testata .contatto { font-size: 13px; color: var(--testo-2); text-align: right; }
+  header.testata .contatto a { color: var(--arancio); font-weight: 600; text-decoration: none; }
+
+  h1 { font-size: 24px; line-height: 1.25; margin: 24px 0 4px; }
+  .sottotitolo { color: var(--testo-2); margin: 0 0 20px; font-size: 15px; }
+  h2 { font-size: 19px; margin: 26px 0 10px; }
+
+  .scheda { background: var(--pannello); border: 1px solid var(--bordo); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .intro { background: var(--verde-chiaro); border-color: #bfe5cf; }
+  .intro b { color: var(--verde); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 6px; border-bottom: 1px solid var(--bordo); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  th { font-size: 13px; color: var(--testo-3); font-weight: 600; }
+  td.num { white-space: nowrap; }
+  td.dopo { color: var(--verde); font-weight: 700; }
+
+  ul.fatto { list-style: none; padding: 0; margin: 0; }
+  ul.fatto li { padding: 10px 0 10px 30px; position: relative; border-bottom: 1px solid var(--bordo); }
+  ul.fatto li:last-child { border-bottom: 0; }
+  ul.fatto li::before { content: "✓"; position: absolute; left: 4px; top: 9px; color: var(--verde); font-weight: 700; font-size: 18px; }
+  ul.fatto li b { display: block; }
+  ul.fatto li span { color: var(--testo-2); }
+
+  .prossimo { background: var(--arancio-chiaro); border-color: var(--arancio-bordo); }
+  .prossimo h3 { margin: 0 0 6px; font-size: 17px; color: var(--arancio); }
+  .prossimo.urgente { background: var(--rosso-chiaro); border-color: var(--rosso-bordo); border-width: 2px; }
+  .prossimo.urgente h3 { color: var(--rosso); }
+  .prossimo p { margin: 0; }
+
+  .chiusura p { margin: 0 0 14px; }
+  .btn-wa {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--wa); color: #fff; text-decoration: none; font-weight: 700; font-size: 17px;
+    padding: 14px 18px; border-radius: 12px;
+  }
+  .btn-wa svg { width: 24px; height: 24px; flex: none; }
+  .solo-stampa { display: none; }
+  .messaggio { text-align: center; color: var(--testo-2); padding: 48px 8px; }
+  footer { text-align: center; font-size: 13px; color: var(--testo-3); margin-top: 24px; line-height: 1.6; }
+  /* Testi lunghi giustificati (Alessandro, 09/10/2026): la sillabazione evita i buchi tra le parole sul telefono */
+  .intro, .chiusura p, .prossimo p { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
+
+  @media (max-width: 420px) {
+    h1 { font-size: 22px; }
+    th, td { padding: 8px 4px; font-size: 15px; }
+  }
+
+  @media print {
+    @page { size: A4; margin: 12mm 12mm 14mm; }
+    body { background: #fff; font-size: 12.5px; }
+    .contenitore { max-width: none; padding: 0; }
+    header.testata { padding: 0 0 8px; }
+    .scheda { break-inside: avoid; page-break-inside: avoid; border-color: #d5dde3; padding: 12px 14px; margin-bottom: 10px; }
+    .scheda.lunga { break-inside: auto; page-break-inside: auto; }
+    ul.fatto li { break-inside: avoid; }
+    h2 { break-after: avoid; page-break-after: avoid; }
+    .btn-wa { display: none; }
+    .solo-stampa { display: block; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<!--DATI-->
+<header class="testata">
+  <div class="riga">
+    <img src="logo.png" alt="Compulandia" />
+    <div class="contatto">Assistenza Computer<br /><a id="tel-testata" href="#">WhatsApp 080 535 2607</a></div>
+  </div>
+</header>
+<div class="contenitore" id="app">
+  <div class="messaggio">Caricamento del riepilogo…</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var WA_ICONA = '<svg viewBox="0 0 32 32" fill="#ffffff" aria-hidden="true"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.4.7 4.6 1.9 6.5L4 29l7.7-1.9c1.8 1 3.9 1.5 6.1 1.5h.1c6.6 0 12-5.4 12-12S22.5 3 16 3zm6.5 13c-.4-.2-2.1-1-2.4-1.2-.3-.1-.6-.2-.8.2-.2.3-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8l.5-.6c.2-.2.2-.4.4-.6.1-.2 0-.5 0-.7 0-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.3 3.4 1.4 3.6c.2.2 2.6 4 6.3 5.5.9.4 1.6.6 2.1.7.9.3 1.7.2 2.3.1.7-.1 2.1-.9 2.4-1.7.3-.8.3-1.5.2-1.7-.1-.1-.3-.2-.7-.4z"/></svg>';
+  var app = document.getElementById("app");
+  var parametri = new URLSearchParams(location.search);
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function messaggio(testo) {
+    app.innerHTML = '<div class="messaggio">' + esc(testo) + "</div>";
+  }
+
+  function disegna(d) {
+    document.title = "Il tuo computer dopo il nostro intervento — " + d.pc;
+    var tel = document.getElementById("tel-testata");
+    tel.href = d.waGenerico;
+    tel.textContent = "WhatsApp " + d.azienda.telefono;
+
+    var h = "<h1>Il tuo computer dopo il nostro intervento</h1>";
+    h += '<p class="sottotitolo">' + esc(d.pc) + " · intervento del " + esc(d.dataIntervento) + "</p>";
+    h += '<section class="scheda intro"><b>' + esc(d.titoloIntro) + "</b> " + esc(d.intro) + "</section>";
+
+    h += '<h2>Prima e dopo</h2><section class="scheda"><table><tr><th></th><th>Prima</th><th>Dopo</th></tr>';
+    d.confronto.forEach(function (r) {
+      h += "<tr><td>" + esc(r.voce) + '</td><td class="num">' + esc(r.prima) + '</td><td class="num dopo">' + esc(r.dopo) + "</td></tr>";
+    });
+    h += "</table></section>";
+
+    h += '<h2>Cosa abbiamo fatto</h2><section class="scheda lunga"><ul class="fatto">';
+    d.fatto.forEach(function (f) { h += "<li><b>" + esc(f.titolo) + "</b><span>" + esc(f.testo) + "</span></li>"; });
+    h += "</ul></section>";
+
+    if (d.prossimi.length) {
+      h += "<h2>Per un risultato ancora migliore</h2>";
+      d.prossimi.forEach(function (p) {
+        var urgente = /^urgente/i.test(p.titolo);
+        h += '<section class="scheda prossimo' + (urgente ? " urgente" : "") + '"><h3>' + esc(p.titolo) + "</h3><p>" + esc(p.testo) + "</p></section>";
+      });
+    }
+
+    h += '<section class="scheda chiusura"><p>' + esc(d.chiusura) + "</p>" +
+      '<a class="btn-wa" href="' + esc(d.waGenerico) + '" target="_blank" rel="noopener">' + WA_ICONA + "Scrivici su WhatsApp</a>" +
+      '<p class="solo-stampa"><b>Scrivici su WhatsApp al ' + esc(d.azienda.telefono) + "</b></p></section>";
+
+    h += "<footer>" + esc(d.azienda.nome) + " · " + esc(d.azienda.indirizzo) + "<br />" +
+      "WhatsApp e telefono " + esc(d.azienda.telefono) + " · " + esc(d.azienda.email) + " · " + esc(d.azienda.sito) + "<br />" +
+      esc(d.azienda.orari) + "</footer>";
+
+    app.innerHTML = h;
+  }
+
+  if (window.__DATI_PAGINA__) {
+    disegna(window.__DATI_PAGINA__);
+    return;
+  }
+
+  var codice = (parametri.get("c") || "").toUpperCase();
+  if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(codice)) {
+    messaggio("Il link non è completo: controlla di averlo aperto per intero dal messaggio che ti abbiamo mandato.");
+    return;
+  }
+  fetch("/page-data?c=" + encodeURIComponent(codice), { cache: "no-store" })
+    .then(function (r) {
+      if (r.status === 404) { throw new Error("scaduta"); }
+      if (!r.ok) { throw new Error("errore"); }
+      return r.json();
+    })
+    .then(function (risposta) {
+      if (risposta.kind !== "riepilogo") { throw new Error("errore"); }
+      disegna(risposta.data);
+    })
+    .catch(function (e) {
+      messaggio(e.message === "scaduta"
+        ? "Questo riepilogo non è più disponibile. Scrivici su WhatsApp al 080 535 2607 e te lo rimandiamo."
+        : "Non riusciamo a caricare il riepilogo in questo momento. Riprova tra poco oppure scrivici su WhatsApp al 080 535 2607.");
+    });
+})();
+</script>
+</body>
+</html>

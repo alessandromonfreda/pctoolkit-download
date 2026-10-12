@@ -13,7 +13,8 @@ interface Env {
 const READ_KEY_HEADER = "x-pctoolkit-read-key";
 const READ_KEY_SHA256 = "c3d05a46e2e54253d057d1f15bd36459a03b96fde2c70693b1839572c8157c36";
 
-const KINDS = ["diagnosi", "programmi"];
+// "riepilogo" (12/10/2026): cosa abbiamo fatto e cosa è cambiato, a fine intervento (prima era solo un PDF).
+const KINDS = ["diagnosi", "programmi", "riepilogo"];
 const MAX_BODY_BYTES = 512 * 1024;
 const EXPIRY_MS = 90 * 24 * 60 * 60 * 1000; // come i report
 const REPORT_ID_PATTERN = /^[a-z0-9]([a-z0-9-]{0,46}[a-z0-9])?$/;
