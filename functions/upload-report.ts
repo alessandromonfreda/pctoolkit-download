@@ -23,7 +23,8 @@ const REQUESTED_ID_PATTERN = /^[a-z0-9]([a-z0-9-]{0,18}[a-z0-9])?$/;
 
 // Notifica WhatsApp per i report inviati dal programma per Clienti ("Compulandia Report PC", metadata.origin =
 // "cliente"), come per il questionario dei programmi (page-choices.ts). Decisione di Alessandro (13/10/2026): SEMPRE,
-// anche quando e' lui a usare il programma per Clienti in negozio; i report di TK Tecnico non notificano.
+// anche quando e' lui a usare il programma per Clienti in negozio. Dei report di TK Tecnico notifica solo il "dopo"
+// della Sessione automatica (fine della sessione, vedi fineSessione).
 // L'invio e' aperto a chiunque conosca l'intestazione sopra: al massimo MAX_NOTIFICHE_GIORNO notifiche nelle ultime
 // 24 ore, perche' uno script che invia report a raffica non faccia sospendere il numero da CallMeBot. Oltre il limite
 // il report si salva comunque.
@@ -52,14 +53,78 @@ function pulito(v: unknown, max: number): string | null {
   return t.length <= max ? t : t.slice(0, max - 1) + "…";
 }
 
+interface Elemento {
+  name?: unknown;
+  succeeded?: unknown;
+}
+
 interface ReportPerNotifica {
   metadata?: { origin?: unknown; customer?: { name?: unknown; phone?: unknown; problemDescription?: unknown } };
   hardware?: { systemProduct?: { manufacturer?: unknown; model?: unknown } };
   diagnosis?: { findings?: { severity?: unknown }[] };
+  // Solo nel report "dopo" della Sessione automatica di TK (AutoSessionSummary in PCToolkit.Core).
+  sessionSummary?: {
+    clientName?: unknown; startedAt?: unknown; aborted?: unknown; rebootCount?: unknown; windowsUpdateCycles?: unknown;
+    bytesFreed?: unknown; steps?: { displayName?: unknown; status?: unknown }[]; installedUpdates?: Elemento[];
+    removedSoftware?: Elemento[]; removedStoreApps?: Elemento[]; installedApps?: Elemento[];
+    avgActivationPending?: unknown; esetActivationPending?: unknown;
+  } | null;
+}
+
+// Fine della Sessione automatica (Alessandro, 13/10/2026): TK carica il report "dopo" con sessionSummary come ultimo
+// atto della sessione, quindi il suo arrivo vuol dire "sessione finita". Una sessione che non arriva in fondo (PC
+// spento, upload fallito) non manda nulla: il report "dopo" che manca resta il segnale, come gia' scritto nella skill.
+export function fineSessione(report: unknown): boolean {
+  const s = (report as ReportPerNotifica | null)?.sessionSummary;
+  return typeof s === "object" && s !== null;
 }
 
 export function daNotificare(report: unknown): boolean {
-  return (report as ReportPerNotifica | null)?.metadata?.origin === "cliente";
+  return (report as ReportPerNotifica | null)?.metadata?.origin === "cliente" || fineSessione(report);
+}
+
+function quandoIt(quando: number): string {
+  return new Date(quando).toLocaleString("it-IT", {
+    timeZone: "Europe/Rome", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
+  });
+}
+
+function riusciti(elenco: Elemento[] | undefined): number {
+  return (elenco ?? []).filter((x) => x?.succeeded === true).length;
+}
+
+// Prima i passi non riusciti (sono quelli da controllare a mano), poi i numeri della sessione.
+export function testoNotificaSessione(report: unknown, id: string, quando: number): string {
+  const s = (report as ReportPerNotifica).sessionSummary ?? {};
+  const cliente = pulito(s.clientName, 80) ?? id;
+  const righe = [`Sessione automatica ${s.aborted === true ? "INTERROTTA" : "finita"}: ${cliente} · ${quandoIt(quando)}`];
+  const inizio = typeof s.startedAt === "string" ? Date.parse(s.startedAt) : NaN;
+  if (!isNaN(inizio) && quando > inizio) {
+    const min = Math.round((quando - inizio) / 60000);
+    righe.push(`Durata: ${min >= 60 ? `${Math.floor(min / 60)} h ${min % 60} min` : `${min} min`}`);
+  }
+  const passi = s.steps ?? [];
+  const conta = (st: string) => passi.filter((p) => p?.status === st).length;
+  const falliti = passi.filter((p) => p?.status === "Failed").map((p) => pulito(p.displayName, 60) ?? "?");
+  righe.push(`Passi: ${conta("Done")} fatti, ${conta("Skipped")} saltati, ` +
+             (falliti.length ? `${falliti.length} NON RIUSCITI` : "nessuno non riuscito"));
+  if (falliti.length) {
+    righe.push(`Da controllare: ${falliti.slice(0, 4).join("; ")}${falliti.length > 4 ? "; …" : ""}`);
+  }
+  const gb = (Number(s.bytesFreed) || 0) / 1024 ** 3;
+  const nonTolti = (s.removedSoftware ?? []).length - riusciti(s.removedSoftware);
+  righe.push(`Tolti ${riusciti(s.removedSoftware)} programmi${nonTolti ? ` (${nonTolti} NON tolti)` : ""} e ` +
+             `${riusciti(s.removedStoreApps)} app, ` +
+             `installati o aggiornati ${riusciti(s.installedApps)} programmi, ` +
+             `${riusciti(s.installedUpdates)} aggiornamenti di Windows`);
+  righe.push(`Spazio liberato ${gb.toFixed(1).replace(".", ",")} GB, riavvii ${Number(s.rebootCount) || 0}`);
+  const daFare = [s.avgActivationPending === true ? "attivare AVG" : "", s.esetActivationPending === true ? "attivare ESET" : ""]
+    .filter((x) => x);
+  if (daFare.length) {
+    righe.push(`Da fare: ${daFare.join(", ")}`);
+  }
+  righe.push(`Report: ${id}`);
+  return righe.join("\n");
 }
 
 // Il nome del Cliente va solo ad Alessandro. L'id del report sta in fondo: esitoCallMeBot lo usa per togliere dalla
@@ -75,10 +140,7 @@ export function testoNotificaReport(report: unknown, id: string, quando: number)
   const sev = (r.diagnosis?.findings ?? []).map((f) => Number(f?.severity) || 0);
   const problemi = sev.filter((s) => s >= 1).length;
   const gravi = sev.filter((s) => s >= 2).length;
-  const ora = new Date(quando).toLocaleString("it-IT", {
-    timeZone: "Europe/Rome", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
-  });
-  const righe = [`Report PC dal Cliente: ${nome}${tel ? ` (${tel})` : ""} · ${ora}`];
+  const righe = [`Report PC dal Cliente: ${nome}${tel ? ` (${tel})` : ""} · ${quandoIt(quando)}`];
   if (problema) {
     righe.push(`Problema: ${problema}`);
   }
@@ -162,7 +224,8 @@ async function salvaEsito(db: D1Database, id: string, quando: number, e: EsitoNo
 async function notificaReport(env: Env, report: unknown, id: string, quando: number): Promise<void> {
   const esito = (await tentateUltimoGiorno(env.REPORTS_DB, quando)) >= MAX_NOTIFICHE_GIORNO
     ? { ok: false, esito: ESITO_LIMITE }
-    : await notifica(env, testoNotificaReport(report, id, quando), id);
+    : await notifica(env, fineSessione(report) ? testoNotificaSessione(report, id, quando)
+                                               : testoNotificaReport(report, id, quando), id);
   await salvaEsito(env.REPORTS_DB, id, quando, esito);
 }
 
