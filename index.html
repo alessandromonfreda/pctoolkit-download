@@ -8,6 +8,8 @@
   :root {
     --arancione: #e8621a;
     --arancione-scuro: #c94f0f;
+    --verde-wa: #1fa855;
+    --verde-wa-scuro: #178a45;
     --sfondo: #0f1115;
     --pannello: #171a20;
     --testo: #eef0f3;
@@ -24,10 +26,10 @@
     background: var(--sfondo);
     color: var(--testo);
     font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    padding: 24px;
+    padding: 24px 16px;
   }
   main {
-    max-width: 560px;
+    max-width: 720px;
     width: 100%;
     background: var(--pannello);
     border: 1px solid var(--bordo);
@@ -47,7 +49,7 @@
   p.subtitle {
     color: var(--testo-attenuato);
     margin: 0 0 32px;
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.6;
   }
   a.download {
@@ -58,47 +60,232 @@
     color: #fff;
     text-decoration: none;
     font-weight: 600;
-    font-size: 16px;
-    padding: 14px 28px;
+    font-size: 19px;
+    padding: 16px 32px;
     border-radius: 10px;
     transition: background 0.15s ease;
   }
   a.download:hover { background: var(--arancione-scuro); }
+  .versione {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: #7d8490;
+  }
+  .avviso-telefono {
+    display: none;
+    margin: 0 0 28px;
+    padding: 16px 18px;
+    background: #2b1d10;
+    border: 1px solid var(--arancione);
+    border-radius: 10px;
+    font-size: 17px;
+    line-height: 1.6;
+    text-align: left;
+  }
+
+  /* ---- Come aprire il programma ---- */
+  .come-aprire {
+    margin-top: 36px;
+    text-align: left;
+    border-radius: 14px;
+    transition: box-shadow 0.4s ease;
+  }
+  .come-aprire.appena-scaricato { box-shadow: 0 0 0 3px var(--arancione); }
+  .partito {
+    display: none;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    background: #12301c;
+    border: 1px solid #2f8a4f;
+    border-radius: 10px;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  .appena-scaricato .partito { display: block; }
+  h2 {
+    font-size: 22px;
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .intro {
+    color: var(--testo-attenuato);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0 0 18px;
+  }
+  ol.passi {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  ol.passi > li {
+    position: relative;
+    padding: 18px 18px 20px 68px;
+    margin: 0 0 14px;
+    background: #1c1f26;
+    border: 1px solid var(--bordo);
+    border-radius: 12px;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .num {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--arancione);
+    color: #fff;
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 38px;
+    text-align: center;
+  }
+  .btn-nome {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: #2e3440;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .no { color: #ff8f8f; font-weight: 600; }
+  .consiglio {
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    border-left: 4px solid var(--arancione);
+    background: #15181e;
+    border-radius: 0 10px 10px 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--testo-attenuato);
+  }
+  .consiglio strong { color: var(--testo); }
+  .tasto {
+    display: inline-block;
+    min-width: 30px;
+    padding: 0 7px;
+    border: 1px solid #5b6270;
+    border-bottom-width: 3px;
+    border-radius: 5px;
+    background: #2a2e37;
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+    font-size: 15px;
+  }
+  h3 {
+    font-size: 19px;
+    margin: 28px 0 6px;
+    font-weight: 600;
+  }
+
+  /* ---- Disegno della finestra blu di Windows (scritte vere di Windows 11 in italiano) ---- */
+  .finto {
+    margin: 14px 0 2px;
+    max-width: 440px;
+    background: #1565c0;
+    color: #fff;
+    border: 1px solid #1565c0;
+    border-radius: 4px;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    overflow: hidden;
+  }
+  .finto-corpo { padding: 20px 22px 8px; }
+  .finto-titolo { font-size: 22px; font-weight: 600; margin: 0 0 12px; }
+  .finto-link { text-decoration: underline; display: inline-block; margin: 6px 0 10px; }
+  .finto-dati { font-size: 13px; opacity: 0.9; margin: 2px 0; }
+  .finto-pulsanti {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 22px 18px;
+  }
+  .finto-pulsante {
+    display: inline-block;
+    padding: 6px 14px;
+    background: #2a7bd6;
+    border: 1px solid #9cc3f0;
+    border-radius: 2px;
+    color: #fff;
+  }
+
+  /* Il punto da cliccare: anello arancione che pulsa + etichetta "Clicca qui" */
+  .qui {
+    position: relative;
+    outline: 3px solid var(--arancione);
+    outline-offset: 2px;
+    border-radius: 6px;
+    animation: pulsa 1.6s ease-in-out infinite;
+  }
+  .etichetta {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 9px;
+    border-radius: 12px;
+    background: var(--arancione);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  @keyframes pulsa {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232, 98, 26, 0.55); }
+    50% { box-shadow: 0 0 0 7px rgba(232, 98, 26, 0); }
+  }
+
   ul.features {
     text-align: left;
     color: var(--testo-attenuato);
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.9;
-    margin: 32px 0 0;
-    padding-left: 20px;
+    margin: 8px 0 0;
+    padding-left: 22px;
   }
-  .nota {
-    margin-top: 28px;
-    padding: 14px 16px;
-    background: #1c1f26;
-    border: 1px solid var(--bordo);
+  .aiuto {
+    margin-top: 32px;
+    padding: 22px 20px;
+    background: #12301c;
+    border: 1px solid #2f8a4f;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .aiuto-titolo { font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+  .aiuto-testo { font-size: 16px; line-height: 1.6; color: var(--testo-attenuato); margin: 0 0 16px; }
+  a.whatsapp {
+    display: inline-block;
+    background: var(--verde-wa);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 18px;
+    padding: 14px 26px;
     border-radius: 10px;
-    font-size: 13px;
-    color: var(--testo-attenuato);
-    text-align: left;
-    line-height: 1.6;
+    transition: background 0.15s ease;
   }
-  .nota strong { color: var(--testo); }
-  .versione {
-    margin: 10px 0 0;
-    font-size: 13px;
-    color: #5c626d;
-  }
-  .altre {
-    margin: 6px 0 0;
-    font-size: 13px;
-    color: #5c626d;
-  }
-  .altre a { color: inherit; }
+  a.whatsapp:hover { background: var(--verde-wa-scuro); }
+  .aiuto-telefono { margin: 12px 0 0; font-size: 16px; color: var(--testo-attenuato); }
+  .aiuto-telefono strong { color: var(--testo); }
   footer {
     margin-top: 28px;
     font-size: 12px;
     color: #5c626d;
+  }
+  @media (max-width: 560px) {
+    main { padding: 28px 18px; }
+    ol.passi > li { padding: 62px 14px 16px; }
+    .num { top: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .qui { animation: none; }
   }
 </style>
 </head>
@@ -108,20 +295,80 @@
   <h1>Compulandia Report PC</h1>
   <p class="subtitle">Invia a Compulandia le informazioni tecniche del tuo PC, così possiamo aiutarti anche a distanza. Non modifica nulla sul PC e non legge i tuoi documenti.</p>
 
+  <div class="avviso-telefono" id="avviso-telefono">
+    <strong>Stai guardando questa pagina dal telefono.</strong><br />
+    Il programma va scaricato <strong>sul computer</strong>. Accendi il computer, apri internet e scrivi in alto questo indirizzo: <strong>pckit.pages.dev</strong>
+  </div>
+
   <a class="download" id="scarica" href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaReportPC.exe">
     ⬇ Scarica il programma
   </a>
   <p class="versione" id="versione">Per Windows 10 e Windows 11</p>
 
-  <ul class="features">
-    <li>Scarica il programma e aprilo: non serve installarlo</li>
-    <li>Scrivi il tuo nome e, se vuoi, il problema che hai</li>
-    <li>Premi "Invia a Compulandia" e attendi circa un minuto</li>
-    <li>Comunica al tecnico il codice che compare alla fine</li>
-  </ul>
+  <section class="come-aprire" id="come-aprire">
+    <div class="partito">✅ <strong>Il download è partito.</strong> Ora segui i passaggi qui sotto, uno alla volta.</div>
 
-  <div class="nota">
-    <strong>Nota:</strong> aprendo il file scaricato, Windows mostra un avviso di sicurezza perché il programma non è ancora firmato digitalmente (normale, non è un'installazione). Basta cliccare <strong>"Esegui"</strong> — se invece compare lo schermo blu "Windows ha protetto il PC", cliccare <strong>"Ulteriori informazioni"</strong> → <strong>"Esegui comunque"</strong>.
+    <h2>Come aprire il programma</h2>
+    <p class="intro">Il browser e Windows possono mostrare degli avvisi perché il programma è nuovo e lo usano in pochi: <strong>è normale</strong>. Il programma è di Compulandia e non modifica nulla sul computer.</p>
+
+    <ol class="passi">
+      <li><span class="num">1</span>
+        Clicca il pulsante arancione <span class="btn-nome">⬇ Scarica il programma</span>.
+      </li>
+      <li><span class="num">2</span>
+        Se il browser ti avvisa che il file <em>«non viene scaricato spesso»</em> o che è stato <em>bloccato</em>, cerca la scelta per <strong>tenere</strong> o <strong>scaricare comunque</strong> il file. A volte è nascosta dietro i tre puntini <span class="btn-nome">…</span> accanto al nome del file.<br />
+        <span class="no">Non cliccare il cestino né «Elimina»</span>: cancellerebbe il programma.
+        <div class="consiglio"><strong>Non vedi più l'elenco dei download?</strong> Premi insieme i tasti <span class="tasto">Ctrl</span> + <span class="tasto">J</span> sulla tastiera: si riapre.</div>
+      </li>
+      <li><span class="num">3</span>
+        Nell'elenco dei download clicca il nome <span class="btn-nome">CompulandiaReportPC.exe</span> per aprirlo.
+      </li>
+    </ol>
+
+    <h3>Se compare la finestra blu di Windows</h3>
+    <p class="intro">Quando apri il programma, Windows può mostrare una finestra blu. Se non compare, il programma si è già aperto: puoi saltare questa parte.</p>
+    <ol class="passi">
+      <li><span class="num">A</span>
+        Nella finestra blu <em>«Windows ha protetto il PC»</em> clicca la scritta <span class="btn-nome">Ulteriori informazioni</span>.<br />
+        <span class="no">Non cliccare «Non eseguire»</span>: chiuderebbe tutto.
+        <div class="finto" aria-hidden="true">
+          <div class="finto-corpo">
+            <p class="finto-titolo">Windows ha protetto il PC</p>
+            <div>Microsoft Defender SmartScreen ha impedito l'avvio di un'app non riconosciuta. L'esecuzione di questa app potrebbe costituire un rischio per il PC.</div>
+            <span class="finto-link qui">Ulteriori informazioni</span> <span class="etichetta">Clicca qui</span>
+          </div>
+          <div class="finto-pulsanti"><span class="finto-pulsante">Non eseguire</span></div>
+        </div>
+      </li>
+      <li><span class="num">B</span>
+        In basso compare un nuovo pulsante: clicca <span class="btn-nome">Esegui comunque</span>. Il programma si apre.
+        <div class="finto" aria-hidden="true">
+          <div class="finto-corpo">
+            <p class="finto-titolo">Windows ha protetto il PC</p>
+            <p class="finto-dati">App: CompulandiaReportPC.exe</p>
+          </div>
+          <div class="finto-pulsanti">
+            <span class="etichetta">Clicca qui</span><span class="finto-pulsante qui">Esegui comunque</span>
+            <span class="finto-pulsante">Non eseguire</span>
+          </div>
+        </div>
+      </li>
+    </ol>
+
+    <h3>Nel programma</h3>
+    <ul class="features">
+      <li>Non serve installarlo: si apre subito</li>
+      <li>Scrivi il tuo nome e, se vuoi, il problema che hai</li>
+      <li>Premi "Invia a Compulandia" e attendi circa un minuto</li>
+      <li>Comunica al tecnico il codice che compare alla fine</li>
+    </ul>
+  </section>
+
+  <div class="aiuto" id="aiuto">
+    <p class="aiuto-titolo">Non ci riesci?</p>
+    <p class="aiuto-testo">Nessun problema: scrivici e ci colleghiamo noi al tuo computer per farlo al posto tuo.</p>
+    <a class="whatsapp" id="whatsapp" href="https://wa.me/390805352607?text=Ciao%2C%20non%20riesco%20ad%20aprire%20il%20programma%20Compulandia%20Report%20PC." target="_blank" rel="noopener">Scrivici su WhatsApp</a>
+    <p class="aiuto-telefono">oppure chiama lo <strong>080 535 2607</strong></p>
   </div>
 
   <footer>Compulandia</footer>
@@ -157,8 +404,34 @@ function pckitWindowsVecchio(nav, fatto) {
 pckitWindowsVecchio(window.navigator, function (vecchio) {
   if (!vecchio) { return; }
   document.getElementById('scarica').style.display = 'none';
+  document.getElementById('come-aprire').style.display = 'none';
   document.getElementById('versione').innerHTML = 'Questo PC ha Windows 7 o 8.1: il programma funziona solo su Windows 10 e 11. Contatta Compulandia per ricevere assistenza.';
 });
+
+// Istruzioni per aprire il programma (13/10/2026). Il 07/10 erano state preparate istruzioni illustrate per
+// Edge, Chrome e Firefox (disegni dei pannelli dei download, passo per passo), MAI pubblicate: Alessandro le ha
+// scartate perche' i browser cambiano spesso le loro finestre e i disegni sarebbero diventati sbagliati senza che
+// nessuno se ne accorgesse, proprio con i Clienti anziani a cui servivano. Restano solo le parti stabili negli
+// anni: una frase generica sul browser, Ctrl+J, la finestra blu di Windows (uguale dal 2012), l'avviso per il
+// telefono e il pulsante WhatsApp "ci colleghiamo noi". Non reintrodurre disegni dei browser.
+(function () {
+  var ua = window.navigator.userAgent || '';
+
+  // Il link arriva quasi sempre su WhatsApp e il Cliente lo apre dal telefono: il programma pero' va
+  // scaricato sul computer.
+  if (/Android|iPhone|iPod|Mobile/.test(ua)) {
+    document.getElementById('avviso-telefono').style.display = 'block';
+  }
+
+  // Dopo il clic sul pulsante la pagina porta da sola alle istruzioni (il download non cambia pagina).
+  document.getElementById('scarica').onclick = function () {
+    var sezione = document.getElementById('come-aprire');
+    sezione.className = 'come-aprire appena-scaricato';
+    setTimeout(function () {
+      if (sezione.scrollIntoView) { sezione.scrollIntoView(true); }
+    }, 600);
+  };
+})();
 </script>
 </body>
 </html>
