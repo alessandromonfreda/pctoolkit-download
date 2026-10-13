@@ -36,7 +36,24 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     "SELECT id, createdAt, expiresAt FROM reports WHERE expiresAt > ? ORDER BY createdAt DESC"
   ).bind(Date.now()).all<ReportListRow>();
 
-  return new Response(JSON.stringify({ reports: results }), {
+  // Esito del WhatsApp per i report inviati dai Clienti (upload-report.ts, 13/10/2026): null = nessuna notifica
+  // (report di TK Tecnico, o inviato prima). Lettura a parte: se la tabella non esiste ancora l'elenco resta com'era.
+  const notifiche = new Map<string, { at: number; ok: number; esito: string }>();
+  try {
+    const n = await env.REPORTS_DB.prepare("SELECT id, at, ok, esito FROM report_notifications")
+      .all<{ id: string; at: number; ok: number; esito: string }>();
+    for (const r of n.results) {
+      notifiche.set(r.id, r);
+    }
+  } catch {
+    // tabella non ancora creata: nessun report Cliente arrivato dopo il 13/10/2026
+  }
+  const reports = results.map((r) => {
+    const n = notifiche.get(r.id);
+    return { ...r, notifica: n ? { at: new Date(n.at).toISOString(), ok: n.ok === 1, esito: n.esito } : null };
+  });
+
+  return new Response(JSON.stringify({ reports }), {
     status: 200,
     headers: { "content-type": "application/json", "cache-control": "no-store" }
   });
