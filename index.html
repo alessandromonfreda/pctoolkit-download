@@ -71,7 +71,7 @@
     font-size: 14px;
     color: #7d8490;
   }
-  .avviso-telefono {
+  .avviso-telefono, .avviso-mac {
     display: none;
     margin: 0 0 28px;
     padding: 16px 18px;
@@ -82,6 +82,12 @@
     line-height: 1.6;
     text-align: left;
   }
+  .per-windows {
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: var(--testo-attenuato);
+  }
+  .per-windows a { color: var(--testo-attenuato); }
 
   /* ---- Come aprire il programma ---- */
   .come-aprire {
@@ -296,14 +302,23 @@
   <p class="subtitle">Invia a Compulandia le informazioni tecniche del tuo PC, così possiamo aiutarti anche a distanza. Non modifica nulla sul PC e non legge i tuoi documenti.</p>
 
   <div class="avviso-telefono" id="avviso-telefono">
-    <strong>Stai guardando questa pagina dal telefono.</strong><br />
-    Il programma va scaricato <strong>sul computer</strong>. Accendi il computer, apri internet e scrivi in alto questo indirizzo: <strong>pckit.pages.dev</strong>
+    <strong>Stai guardando questa pagina dal telefono o dal tablet.</strong><br />
+    Il programma va scaricato <strong>sul computer</strong>. Accendi il computer, apri internet e scrivi in alto questo indirizzo: <strong>pckit.pages.dev</strong><br />
+    Funziona solo sui computer con Windows: se il tuo computer è un Mac, scrivici con il pulsante verde in fondo alla pagina.
   </div>
 
-  <a class="download" id="scarica" href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaReportPC.exe">
-    ⬇ Scarica il programma
-  </a>
-  <p class="versione" id="versione">Per Windows 10 e Windows 11</p>
+  <div class="avviso-mac" id="avviso-mac">
+    <strong>Stai usando un Mac.</strong><br />
+    Il programma funziona solo sui computer con Windows, quindi sul Mac non si può usare. Nessun problema: scrivici su WhatsApp con il pulsante verde qui sotto, oppure chiamaci, e ti diciamo noi come fare.
+    <p class="per-windows">Devi scaricarlo per un altro computer con Windows? <a id="scarica-comunque" href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaReportPC.exe">Scarica la versione per Windows</a></p>
+  </div>
+
+  <div id="download-windows">
+    <a class="download" id="scarica" href="https://github.com/alessandromonfreda/pctoolkit-download/releases/latest/download/CompulandiaReportPC.exe">
+      ⬇ Scarica il programma
+    </a>
+    <p class="versione" id="versione">Per Windows 10 e Windows 11</p>
+  </div>
 
   <section class="come-aprire" id="come-aprire">
     <div class="partito">✅ <strong>Il download è partito.</strong> Ora segui i passaggi qui sotto, uno alla volta.</div>
@@ -372,8 +387,8 @@
   </section>
 
   <div class="aiuto" id="aiuto">
-    <p class="aiuto-titolo">Non ci riesci?</p>
-    <p class="aiuto-testo">Nessun problema: scrivici e ci colleghiamo noi al tuo computer per farlo al posto tuo.</p>
+    <p class="aiuto-titolo" id="aiuto-titolo">Non ci riesci?</p>
+    <p class="aiuto-testo" id="aiuto-testo">Nessun problema: scrivici e ci colleghiamo noi al tuo computer per farlo al posto tuo.</p>
     <a class="whatsapp" id="whatsapp" href="https://wa.me/390805352607?text=Ciao%2C%20non%20riesco%20ad%20aprire%20il%20programma%20Compulandia%20Report%20PC." target="_blank" rel="noopener">Scrivici su WhatsApp</a>
     <p class="aiuto-telefono">oppure chiama lo <strong>080 535 2607</strong></p>
   </div>
@@ -433,8 +448,22 @@ pckitWindowsVecchio(window.navigator, function (vecchio) {
 
   // Il link arriva quasi sempre su WhatsApp e il Cliente lo apre dal telefono: il programma pero' va
   // scaricato sul computer.
-  if (/Android|iPhone|iPod|Mobile/.test(ua)) {
+  // Mac (21/10/2026): il programma esiste solo per Windows. Fino a questa data il Mac riceveva il pulsante e le
+  // istruzioni per Windows e scaricava un .exe che non poteva aprire; ora vede un avviso e il pulsante WhatsApp
+  // con un messaggio "ho un Mac". L'iPad da iPadOS 13 dichiara "Macintosh" come un Mac: lo distingue solo lo
+  // schermo touch (un Mac non ne ha), e va trattato come un telefono.
+  var mac = /Macintosh/.test(ua);
+  var touch = (window.navigator.maxTouchPoints || 0) > 1;
+  if (/Android|iPhone|iPad|iPod|Mobile/.test(ua) || (mac && touch)) {
     document.getElementById('avviso-telefono').style.display = 'block';
+  } else if (mac) {
+    document.getElementById('avviso-mac').style.display = 'block';
+    document.getElementById('download-windows').style.display = 'none';
+    document.getElementById('come-aprire').style.display = 'none';
+    document.getElementById('aiuto-titolo').innerHTML = 'Scrivici, ti aiutiamo noi';
+    document.getElementById('aiuto-testo').innerHTML = 'Il messaggio dice già che hai un Mac: ti rispondiamo noi.';
+    document.getElementById('whatsapp').href = 'https://wa.me/390805352607?text=' +
+      encodeURIComponent('Ciao, ho un Mac e non posso usare il programma Compulandia Report PC. Come posso fare?');
   }
 
   // Dopo il clic sul pulsante la pagina porta da sola alle istruzioni (il download non cambia pagina).
