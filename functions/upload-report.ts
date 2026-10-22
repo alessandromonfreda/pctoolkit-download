@@ -68,7 +68,22 @@ interface ReportPerNotifica {
     bytesFreed?: unknown; steps?: { displayName?: unknown; status?: unknown }[]; installedUpdates?: Elemento[];
     removedSoftware?: Elemento[]; removedStoreApps?: Elemento[]; installedApps?: Elemento[];
     avgActivationPending?: unknown; esetActivationPending?: unknown;
+    finalCheck?: { name?: unknown; message?: unknown }[];
   } | null;
+}
+
+// Caso Morfeo (21/10/2026): WinRAR, Spotify, OneDrive e altri, che la sessione non sa togliere senza finestre, restavano
+// sul PC e il WhatsApp diceva solo "Da controllare: Controllo finale". Ora le voci "Da fare a mano" del controllo finale
+// compaiono una per una. Il testo dei programmi lo scrive AutoSessionPlanner.ManualRemovals in TK: stesso prefisso.
+const PROGRAMMA_A_MANO = /^programma da disinstallare a mano: (.+?) \((?:il Cliente non lo usa|da togliere secondo il catalogo|disinstallazione non riuscita)/;
+
+function voceAMano(messaggio: unknown): string | null {
+  const t = pulito(messaggio, 300);
+  if (t === null) {
+    return null;
+  }
+  const m = PROGRAMMA_A_MANO.exec(t);
+  return m ? `togliere ${pulito(m[1], 60)}` : pulito(t, 70);
 }
 
 // Fine della Sessione automatica (Alessandro, 13/10/2026): TK carica il report "dopo" con sessionSummary come ultimo
@@ -118,6 +133,11 @@ export function testoNotificaSessione(report: unknown, id: string, quando: numbe
              `installati o aggiornati ${riusciti(s.installedApps)} programmi, ` +
              `${riusciti(s.installedUpdates)} aggiornamenti di Windows`);
   righe.push(`Spazio liberato ${gb.toFixed(1).replace(".", ",")} GB, riavvii ${Number(s.rebootCount) || 0}`);
+  const aMano = (s.finalCheck ?? []).filter((x) => x?.name === "Da fare a mano").map((x) => voceAMano(x?.message))
+    .filter((x): x is string => x !== null);
+  if (aMano.length) {
+    righe.push(`Da fare a mano (${aMano.length}): ${aMano.slice(0, 8).join("; ")}${aMano.length > 8 ? "; …" : ""}`);
+  }
   const daFare = [s.avgActivationPending === true ? "attivare AVG" : "", s.esetActivationPending === true ? "attivare ESET" : ""]
     .filter((x) => x);
   if (daFare.length) {
