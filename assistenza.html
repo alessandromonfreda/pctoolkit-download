@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Compulandia — Assistenza a distanza</title>
+<style>
+  :root {
+    --arancione: #e8621a;
+    --arancione-scuro: #c94f0f;
+    --verde-wa: #1fa855;
+    --verde-wa-scuro: #178a45;
+    --sfondo: #0f1115;
+    --pannello: #171a20;
+    --testo: #eef0f3;
+    --testo-attenuato: #9aa1ab;
+    --bordo: #2a2e37;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sfondo);
+    color: var(--testo);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 24px 16px;
+  }
+  main {
+    max-width: 720px;
+    width: 100%;
+    background: var(--pannello);
+    border: 1px solid var(--bordo);
+    border-radius: 16px;
+    padding: 40px 36px;
+    text-align: center;
+  }
+  img.logo { height: 48px; margin-bottom: 24px; }
+  h1 { font-size: 26px; margin: 0 0 8px; font-weight: 600; }
+  p.subtitle {
+    color: var(--testo-attenuato);
+    margin: 0 0 32px;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  a.apri {
+    display: inline-block;
+    background: var(--arancione);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 21px;
+    padding: 18px 34px;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+  }
+  a.apri:hover { background: var(--arancione-scuro); }
+  .avviso {
+    display: none;
+    margin: 0 0 28px;
+    padding: 16px 18px;
+    background: #2b1d10;
+    border: 1px solid var(--arancione);
+    border-radius: 10px;
+    font-size: 17px;
+    line-height: 1.6;
+    text-align: left;
+  }
+  .sezione { margin-top: 36px; text-align: left; }
+  h2 { font-size: 22px; margin: 0 0 14px; font-weight: 600; }
+  ol.passi { list-style: none; margin: 0; padding: 0; }
+  ol.passi > li {
+    position: relative;
+    padding: 18px 18px 20px 68px;
+    margin: 0 0 14px;
+    background: #1c1f26;
+    border: 1px solid var(--bordo);
+    border-radius: 12px;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .num {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--arancione);
+    color: #fff;
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 38px;
+    text-align: center;
+  }
+  .btn-nome {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: #2e3440;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .no { color: #ff8f8f; font-weight: 600; }
+  .tasto {
+    display: inline-block;
+    min-width: 30px;
+    padding: 0 7px;
+    border: 1px solid #5b6270;
+    border-bottom-width: 3px;
+    border-radius: 5px;
+    background: #2a2e37;
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+  ul.alternative {
+    margin: 0;
+    padding-left: 22px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  ul.alternative li { margin-bottom: 12px; }
+  ul.alternative a { color: #f4a46f; }
+  .sicurezza {
+    margin-top: 28px;
+    padding: 14px 16px;
+    border-left: 4px solid var(--arancione);
+    background: #15181e;
+    border-radius: 0 10px 10px 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--testo-attenuato);
+    text-align: left;
+  }
+  .sicurezza strong { color: var(--testo); }
+  .aiuto {
+    margin-top: 32px;
+    padding: 22px 20px;
+    background: #12301c;
+    border: 1px solid #2f8a4f;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .aiuto-titolo { font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+  .aiuto-testo { font-size: 16px; line-height: 1.6; color: var(--testo-attenuato); margin: 0 0 16px; }
+  a.whatsapp {
+    display: inline-block;
+    background: var(--verde-wa);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 18px;
+    padding: 14px 26px;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+  }
+  a.whatsapp:hover { background: var(--verde-wa-scuro); }
+  .aiuto-telefono { margin: 12px 0 0; font-size: 16px; color: var(--testo-attenuato); }
+  .aiuto-telefono strong { color: var(--testo); }
+  footer { margin-top: 28px; font-size: 12px; color: #5c626d; }
+  @media (max-width: 560px) {
+    main { padding: 28px 18px; }
+    ol.passi > li { padding: 62px 14px 16px; }
+    .num { top: 14px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <img src="logo.png" alt="Compulandia" class="logo" />
+  <h1>Assistenza a distanza</h1>
+  <p class="subtitle">Con questo pulsante si apre <strong>Assistenza rapida</strong>, il programma di Windows che ci permette di vedere il tuo schermo e aiutarti senza venire da te. Non devi installare nulla.</p>
+
+  <div class="avviso" id="avviso-telefono">
+    <strong>Stai guardando questa pagina dal telefono o dal tablet.</strong><br />
+    L'assistenza si fa <strong>sul computer</strong>. Apri la stessa email dal computer e clicca lì il link, oppure accendi il computer, apri internet e scrivi in alto questo indirizzo: <strong>pckit.pages.dev/assistenza</strong>
+  </div>
+
+  <div class="avviso" id="avviso-mac">
+    <strong>Stai usando un Mac.</strong><br />
+    Assistenza rapida esiste solo sui computer con Windows. Nessun problema: scrivici su WhatsApp con il pulsante verde qui sotto, oppure chiamaci, e ti diciamo noi come collegarci.
+  </div>
+
+  <div class="avviso" id="avviso-vecchio">
+    <strong>Questo computer ha una versione di Windows vecchia</strong> (Windows 7 o 8), su cui Assistenza rapida non c'è. Nessun problema: chiamaci o scrivici con il pulsante verde qui sotto e ti diciamo noi come collegarci.
+  </div>
+
+  <div id="parte-windows">
+    <a class="apri" id="apri" href="ms-quick-assist:">▶ Apri Assistenza rapida</a>
+
+    <section class="sezione">
+      <h2>Cosa fare</h2>
+      <ol class="passi">
+        <li><span class="num">1</span>
+          Clicca il pulsante arancione <span class="btn-nome">▶ Apri Assistenza rapida</span>.
+        </li>
+        <li><span class="num">2</span>
+          In alto il browser ti chiede se vuoi aprire <em>Assistenza rapida</em>: clicca <span class="btn-nome">Apri</span>.<br />
+          È una domanda normale, il browser la fa ogni volta che una pagina apre un programma del computer.
+        </li>
+        <li><span class="num">3</span>
+          Si apre la finestra di Assistenza rapida. Scrivi il <strong>codice di 6 caratteri</strong> che ti dettiamo al telefono e clicca <span class="btn-nome">Invia</span>.
+        </li>
+        <li><span class="num">4</span>
+          Quando ti chiede di condividere lo schermo, clicca <span class="btn-nome">Consenti</span>. Da qui pensiamo a tutto noi: puoi seguire sullo schermo quello che facciamo.
+        </li>
+      </ol>
+    </section>
+
+    <section class="sezione">
+      <h2>Non si apre?</h2>
+      <ul class="alternative">
+        <li>Premi insieme i tasti <span class="tasto">Ctrl</span> + <span class="tasto">⊞ Windows</span> + <span class="tasto">Q</span> sulla tastiera: si apre Assistenza rapida.</li>
+        <li>Oppure clicca <strong>Start</strong> in basso, scrivi <strong>assistenza rapida</strong> e clicca il programma che compare.</li>
+        <li>Se il programma non c'è, puoi <a href="https://apps.microsoft.com/detail/9P7BP5VNWKX5" target="_blank" rel="noopener">scaricarlo gratis da Microsoft</a>, poi torna a questa pagina e clicca di nuovo il pulsante arancione.</li>
+      </ul>
+    </section>
+
+    <div class="sicurezza">
+      <strong>Per la tua sicurezza:</strong> dai il codice solo a Compulandia, quando sei tu ad averci chiesto aiuto. Puoi chiudere il collegamento quando vuoi, chiudendo la finestra di Assistenza rapida.
+    </div>
+  </div>
+
+  <div class="aiuto">
+    <p class="aiuto-titolo" id="aiuto-titolo">Non ci riesci?</p>
+    <p class="aiuto-testo" id="aiuto-testo">Chiamaci o scrivici: ti guidiamo passo passo.</p>
+    <a class="whatsapp" id="whatsapp" href="https://wa.me/390805352607?text=Ciao%2C%20non%20riesco%20ad%20aprire%20Assistenza%20rapida." target="_blank" rel="noopener">Scrivici su WhatsApp</a>
+    <p class="aiuto-telefono">oppure chiama lo <strong>080 535 2607</strong></p>
+  </div>
+
+  <footer>Compulandia</footer>
+</main>
+<script>
+// Pagina "assistenza" (05/11/2026): link da mandare per email ai Clienti poco pratici per aprire Assistenza
+// rapida (Quick Assist) di Windows. Il pulsante usa l'indirizzo "ms-quick-assist:", registrato in Windows
+// dall'app Assistenza rapida (Microsoft Store, MicrosoftCorporationII.QuickAssist). Non si mette
+// "ms-quick-assist:" direttamente nella mail perche' Gmail/Outlook web tolgono o bloccano i link che non sono
+// http/https: per questo si passa da questa pagina.
+// Niente apertura automatica al caricamento: Chrome/Edge possono ignorare un programma esterno aperto senza un
+// clic, e una domanda del browser comparsa da sola, prima di aver letto la pagina, confonde chi e' poco pratico.
+// Niente disegni della domanda del browser ("Aprire Assistenza rapida?"): come per la pagina di download,
+// le finestre dei browser cambiano spesso e un disegno superato confonderebbe proprio questi Clienti.
+// Solo sintassi ES5, come index.html.
+function pckitWindowsVecchio(nav, fatto) {
+  var ua = (nav && nav.userAgent) || '';
+  var nt = /Windows NT (\d+)\.(\d+)/.exec(ua);
+  if (!nt) { fatto(false); return; }
+  if (parseInt(nt[1], 10) < 10) { fatto(true); return; }
+  var dati = nav.userAgentData;
+  if (!dati || !dati.getHighEntropyValues || dati.platform !== 'Windows') { fatto(false); return; }
+  try {
+    dati.getHighEntropyValues(['platformVersion']).then(function (valori) {
+      var principale = parseInt(String((valori && valori.platformVersion) || '').split('.')[0], 10);
+      fatto(principale === 0);
+    }, function () { fatto(false); });
+  } catch (e) {
+    fatto(false);
+  }
+}
+
+(function () {
+  var ua = window.navigator.userAgent || '';
+  var mac = /Macintosh/.test(ua);
+  var touch = (window.navigator.maxTouchPoints || 0) > 1;
+
+  function soloAiuto(testoWhatsApp) {
+    document.getElementById('parte-windows').style.display = 'none';
+    document.getElementById('aiuto-titolo').innerHTML = 'Scrivici, ti aiutiamo noi';
+    document.getElementById('aiuto-testo').innerHTML = 'Chiamaci o scrivici: ci colleghiamo in un altro modo.';
+    document.getElementById('whatsapp').href = 'https://wa.me/390805352607?text=' + encodeURIComponent(testoWhatsApp);
+  }
+
+  if (/Android|iPhone|iPad|iPod|Mobile/.test(ua) || (mac && touch)) {
+    document.getElementById('avviso-telefono').style.display = 'block';
+  } else if (mac) {
+    document.getElementById('avviso-mac').style.display = 'block';
+    soloAiuto('Ciao, ho un Mac e mi serve assistenza a distanza. Come posso fare?');
+  } else {
+    pckitWindowsVecchio(window.navigator, function (vecchio) {
+      if (!vecchio) { return; }
+      document.getElementById('avviso-vecchio').style.display = 'block';
+      soloAiuto('Ciao, ho un computer con Windows vecchio e mi serve assistenza a distanza. Come posso fare?');
+    });
+  }
+})();
+</script>
+</body>
+</html>
